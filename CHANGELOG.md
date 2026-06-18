@@ -6,6 +6,9 @@ All notable changes to Troubadour are recorded here.
 
 ## [Unreleased] — 2026-06-18
 
+### Added
+- **README.md** — Project overview, feature list, tech stack, and local setup instructions.
+
 ### Fixed
 - **Playing glow animation hardcoded to gold** — `pulse-glow` keyframes used a hardcoded `rgba(212,175,55,...)` value instead of the theme's `--color-accent` variable. Replaced with `rgb(var(--color-accent) / ...)` so the glow on the play button, disk, and indicator dots follows the active theme's accent color.
 - **Intensity button text, border, and playing dot not using custom colors** — Dynamic CSS injected by `applyIntensityColors` was being overridden by static `index.css` rules due to specificity/load order. Added `!important` to `color`, `border-color`, and `background` in the dynamic style block so custom intensity colors always apply correctly to the active button's text, outline, and indicator dot.
