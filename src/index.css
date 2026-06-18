@@ -1,0 +1,188 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Default theme (Dark Fantasy) ─────────────────────────── */
+:root {
+  --color-accent:   212 175 55;
+  --color-darkbg:   17 24 39;
+  --color-midnight: 13 13 26;
+  --color-panel:    26 31 46;
+  --color-border:   45 51 72;
+  --color-ember:    192 57 43;
+}
+
+/* ── Theme overrides via data-theme attribute ──────────────── */
+[data-theme="darkfantasy"] {
+  --color-accent:   212 175 55;
+  --color-darkbg:   17 24 39;
+  --color-midnight: 13 13 26;
+  --color-panel:    26 31 46;
+  --color-border:   45 51 72;
+  --color-ember:    192 57 43;
+}
+[data-theme="arcane"] {
+  --color-accent:   168 85 247;
+  --color-darkbg:   13 8 24;
+  --color-midnight: 10 5 20;
+  --color-panel:    22 13 38;
+  --color-border:   42 29 69;
+  --color-ember:    124 58 237;
+}
+[data-theme="battlefield"] {
+  --color-accent:   132 204 22;
+  --color-darkbg:   15 26 10;
+  --color-midnight: 9 15 5;
+  --color-panel:    20 31 14;
+  --color-border:   37 48 22;
+  --color-ember:    180 83 9;
+}
+[data-theme="celestial"] {
+  --color-accent:   147 197 253;
+  --color-darkbg:   10 15 30;
+  --color-midnight: 6 11 24;
+  --color-panel:    15 22 40;
+  --color-border:   30 45 74;
+  --color-ember:    96 165 250;
+}
+[data-theme="bloodmoon"] {
+  --color-accent:   220 38 38;
+  --color-darkbg:   18 5 5;
+  --color-midnight: 12 3 3;
+  --color-panel:    28 8 8;
+  --color-border:   65 18 18;
+  --color-ember:    249 115 22;
+}
+[data-theme="deepsea"] {
+  --color-accent:   34 211 238;
+  --color-darkbg:   5 18 22;
+  --color-midnight: 3 12 15;
+  --color-panel:    8 28 36;
+  --color-border:   15 55 70;
+  --color-ember:    52 211 153;
+}
+[data-theme="sunset"] {
+  --color-accent:   251 146 60;
+  --color-darkbg:   20 10 5;
+  --color-midnight: 14 7 3;
+  --color-panel:    30 15 8;
+  --color-border:   70 35 15;
+  --color-ember:    239 68 68;
+}
+[data-theme="neonvoid"] {
+  --color-accent:   0 255 200;
+  --color-darkbg:   4 4 8;
+  --color-midnight: 2 2 5;
+  --color-panel:    8 8 14;
+  --color-border:   22 22 38;
+  --color-ember:    180 0 255;
+}
+
+@layer base {
+  body {
+    @apply bg-darkbg text-gray-100 font-body;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { @apply bg-midnight; }
+  ::-webkit-scrollbar-thumb { @apply bg-border rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { background: rgb(var(--color-accent)); }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-4 py-2 bg-ember hover:opacity-90 text-white font-medium rounded-lg transition-all duration-150 text-sm;
+  }
+  .btn-secondary {
+    @apply px-4 py-2 bg-panel hover:bg-border text-gray-300 font-medium rounded-lg border border-border transition-colors duration-150 text-sm;
+  }
+  .btn-gold {
+    @apply px-4 py-2 bg-gold hover:opacity-90 text-midnight font-semibold rounded-lg transition-all duration-150 text-sm;
+  }
+  .panel-card {
+    @apply bg-panel border border-border rounded-xl;
+  }
+  .input-dark {
+    @apply bg-midnight border border-border rounded-lg px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-gold transition-colors;
+  }
+  .tab-btn {
+    @apply px-3 py-1.5 text-xs font-medium rounded-md transition-colors duration-150 whitespace-nowrap;
+  }
+  .tab-btn-active {
+    @apply bg-gold text-midnight;
+  }
+  .tab-btn-inactive {
+    @apply text-gray-400 hover:text-gray-200 hover:bg-border;
+  }
+}
+
+/* ── Intensity glow/ring classes ────────────────────────────── */
+/* These are overridden at runtime by the injected #troubadour-intensity-css
+   style tag — these are just safe defaults so nothing looks broken on first load */
+.intensity-0 { color: #60a5fa; border-color: #60a5fa; }
+.intensity-0-glow { box-shadow: 0 0 14px 3px rgba(96,165,250,0.55); }
+.intensity-0-ring { box-shadow: 0 0 0 2px #60a5fa; }
+.intensity-0-bg-dot { background: #60a5fa; }
+
+.intensity-1 { color: #facc15; border-color: #facc15; }
+.intensity-1-glow { box-shadow: 0 0 14px 3px rgba(250,204,21,0.55); }
+.intensity-1-ring { box-shadow: 0 0 0 2px #facc15; }
+.intensity-1-bg-dot { background: #facc15; }
+
+.intensity-2 { color: #fb923c; border-color: #fb923c; }
+.intensity-2-glow { box-shadow: 0 0 14px 3px rgba(251,146,60,0.55); }
+.intensity-2-ring { box-shadow: 0 0 0 2px #fb923c; }
+.intensity-2-bg-dot { background: #fb923c; }
+
+.intensity-3 { color: #f87171; border-color: #f87171; }
+.intensity-3-glow { box-shadow: 0 0 14px 3px rgba(248,113,113,0.55); }
+.intensity-3-ring { box-shadow: 0 0 0 2px #f87171; }
+.intensity-3-bg-dot { background: #f87171; }
+
+.intensity-4 { color: #c084fc; border-color: #c084fc; }
+.intensity-4-glow { box-shadow: 0 0 14px 3px rgba(192,132,252,0.55); }
+.intensity-4-ring { box-shadow: 0 0 0 2px #c084fc; }
+.intensity-4-bg-dot { background: #c084fc; }
+
+/* ── Disk spin ──────────────────────────────────────────────── */
+@keyframes spin-disk {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.disk-spinning {
+  animation: spin-disk 3s linear infinite;
+}
+.disk-paused {
+  animation-play-state: paused;
+}
+
+/* ── Transition shimmer ─────────────────────────────────────── */
+@keyframes shimmer-ring {
+  0%, 100% { box-shadow: 0 0 10px 4px rgba(212,175,55,0.3); }
+  50%       { box-shadow: 0 0 28px 10px rgba(212,175,55,0.7); }
+}
+.transitioning-glow {
+  animation: shimmer-ring 0.9s ease-in-out infinite;
+}
+
+/* ── Playing glow (gold pulse) ──────────────────────────────── */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 4px 1px rgb(var(--color-accent) / 0.4); }
+  50%       { box-shadow: 0 0 12px 4px rgb(var(--color-accent) / 0.7); }
+}
+.playing-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* ── SFX button press ───────────────────────────────────────── */
+.sfx-btn {
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+.sfx-btn:active {
+  transform: scale(0.94);
+}
+
+.intensity-bar {
+  transition: width 0.3s ease;
+}
