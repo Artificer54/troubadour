@@ -4,7 +4,82 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-19 (session 5)
+
+### Changed
+- **Image settings moved into modals** — Blur and darkness sliders now live inside the Create Scenario wizard and Edit Scenario modal, directly below the image preview. On save/create the image is uploaded and processed server-side (via `sharp`) with the chosen values baked in. In Edit modal, if the scenario already has a stored original, adjusting sliders reprocesses from the original on save. Removed the stale image-settings block from Advanced Controls.
+
+### Added
+- **Replace button on existing image in Edit modal** — Small "Replace" button overlaid on the preview lets users swap the image without having to clear it first.
+
+---
+
+## [Unreleased] — 2026-06-19 (session 4)
+
+### Added
+- **Server-side image processing** — Background images are now blurred and darkened by the server (using `sharp`) at upload time rather than relying on CSS filters. The original file is preserved as `*_orig.*`; the processed version `*_bg.jpg` is what gets displayed.
+- **Background blur & darkness sliders** — Advanced Controls now shows "Background Image" sliders (Blur 0–30px, Darkness 0–90%) when the selected scenario has a background image. Adjusting either slider debounces 600ms then re-processes the original on the server and hot-swaps the image in the browser using `updated_at` as a cache-buster.
+- **`bg_blur` / `bg_darkness` / `background_image_original` DB columns** — Added via runtime migrations. Existing scenarios without originals gracefully skip the reprocess controls.
+
+### Fixed
+- **Splash screen pill shape** — Changed pill corners from `rounded-xl` (square-ish) to `rounded-full` (fully capsule-shaped).
+- **Background image not displaying** — SQLite's `datetime('now')` produces timestamps with a space (e.g. `"2026-06-19 10:30:00"`). When interpolated unencoded into a CSS `background-image: url(...)` cache-buster param, the space broke the CSS value and the browser silently skipped the image. Fixed by wrapping `updated_at` in `encodeURIComponent` in both `App.jsx` and `ScenarioControlPanel.jsx`.
+- **Image controls always hidden** — `AdvancedControls` required `background_image_original` to show the blur/darkness sliders, but that field was never saved (the PUT route ignored it). Changed the `hasBg` guard to only require `background_image`. The reprocess endpoint still checks for `background_image_original` gracefully — re-uploading will populate it going forward.
+- **PUT route not saving image metadata** — `PUT /api/playlists/:id` was silently dropping `background_image_original`, `bg_blur`, and `bg_darkness`. Fixed to persist all four image fields.
+
+---
+
+## [Unreleased] — 2026-06-19 (session 3)
+
+### Fixed
+- **Splash screen title** — Replaced text-shadow-only approach with a dark semi-transparent pill (`rgba(8,8,16,0.72)`) behind the title and subtitle, with a matching box-shadow halo so it bleeds cleanly into the disk. Both "TROUBADOUR" and "TTRPG Audio Manager" are now clearly legible against the spinning disk at any color.
+- **Background image animation stutter** — Removed all `backdrop-filter: blur` from `ScenarioControlPanel` and the main `App` layout. `backdrop-blur` is GPU-expensive and was the root cause of stutter when a scenario background image was active. Panels now use solid semi-transparent `bg-midnight/*` backgrounds instead, which has no compositing cost.
+
+---
+
+## [Unreleased] — 2026-06-19 (session 2)
+
+### Added
+- **Library folder workflow** — "Open Library Folder" and "Scan for New Files" buttons in AddTrackModal and the scenario wizard. Users can copy audio files directly into the `tracks/` directory and scan to register them without uploading through the browser. Server-side routes `POST /api/assets/open-folder` and `POST /api/assets/scan` power this.
+- **Upload demoted to fallback** — FileUpload is now collapsed under an "Upload files directly" toggle in AddTrackModal and the scenario creation wizard. Library-first workflow is the default.
+
+### Fixed
+- **Splash screen text legibility** — Added a dark drop-shadow to "TROUBADOUR" and "TTRPG Audio Manager" text so they stand out from the spinning disk behind them.
+- **Intensity tab bug** — Clicking intensity tabs no longer triggers "no tracks" error and blocked the tab from switching. Tabs now switch the view (and track list) independently of playback; play button starts the selected intensity.
+- **Intensity colors in wizard** — Scenario creation wizard now reads intensity colors from the user's settings (custom presets, etc.) instead of hardcoded Tailwind blue/yellow/orange classes.
+- **Performance: RAF loop** — Progress bar animation loop now stops when playback is paused or stopped, instead of running at 60fps continuously.
+
+---
+
+## [Unreleased] — 2026-06-19
+
+### Added
+- **Scenario creation wizard** — New multi-step modal replaces the single-form dialog. Step 1 collects name, background image, and intensity count (now buttons, not a slider). Steps 2–N let you pre-assign tracks to each intensity level with search and toggle-style selection. Final step shows a summary before creation.
+- **Background image per scenario** — Scenarios can have a background image (PNG/JPG/WEBP, up to 10MB) set during creation or via the edit modal. When active, the image appears behind the UI with a frosted glass / backdrop-blur effect on all panels.
+- **Frosted glass UI** — When a scenario with a background image is selected, panels switch to semi-transparent backgrounds with `backdrop-filter: blur` for a polished layered look.
+- **Pinned start track** — Hovering a track in the intensity list reveals a pin icon. Clicking it sets that track as the first to play when starting that intensity. Smart shuffle continues after. Pin persists across sessions via localStorage. Click again to toggle off.
+- **Scaled intensity buttons** — Intensity buttons now stretch equally across the full panel width (`flex-1`) rather than wrapping — 3 intensities = each takes 1/3, etc.
+- **Splash screen** — On first page load, a full-screen title screen appears showing a large spinning disk (in the last-played intensity color) with the TROUBADOUR logo overlaid. A random fun welcome message and fake loading line display beneath. Auto-dismisses after ~3 seconds or click anywhere to skip.
+- **Image upload server route** — New `server/routes/images.js` serving `/api/images/upload`. Images saved to `./images/` directory and served at `/images/*`.
+- **DB migration** — `background_image TEXT` column added to `playlists` table via runtime migration.
+
+### Changed
+- **Scenario edit modal** — Added background image upload/remove field alongside name and description.
+- **Intensity switch** — Saves last-played intensity index to localStorage for use by the splash screen disk color.
+
+---
+
 ## [Unreleased] — 2026-06-18
+
+### Changed
+- **Self-hosted refactor: Supabase → SQLite + Express** — Removed all Supabase and Vercel dependencies. The app now runs entirely on Windows with no cloud services required.
+  - **Auth removed** — Eliminated login screen, `AuthGate.jsx`, session middleware, and the Supabase keep-alive pinger. App launches directly into single-user mode.
+  - **SQLite database** — Added `better-sqlite3`; schema auto-initializes in `troubador.db` on first run, mirroring all prior tables (playlists, tracks, audio assets, SFX panels/buttons).
+  - **Local file storage** — Audio uploads now save to `./tracks/` on disk and are served at `/tracks/*`. No signed URLs or cloud bucket needed.
+  - **Express API server** — New `server/` directory with `index.js` (entry point), `db.js` (SQLite setup), and REST routes for assets, playlists, and SFX. Serves the built SPA in production.
+  - **Dev workflow** — `npm run dev` runs Express (port 3001) + Vite (port 5173) concurrently with proxy. `npm run build && npm start` for production. Compatible with PM2 (`pm2 start server/index.js --name troubador`).
+
+
 
 ### Added
 - **README.md** — Project overview, feature list, tech stack, and local setup instructions.

@@ -186,3 +186,22 @@
 .intensity-bar {
   transition: width 0.3s ease;
 }
+
+/* ── Frosted glass panels ───────────────────────────────────── */
+.backdrop-blur-md {
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+.backdrop-blur-sm {
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.backdrop-blur-xl {
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+
+/* ── Splash screen disk override (bigger spin) ──────────────── */
+.splash-disk {
+  animation: spin-disk 4s linear infinite;
+}

@@ -1,19 +1,5 @@
 import { create } from 'zustand'
-import { supabase } from '../lib/supabase'
 import { audioEngine } from '../lib/audioEngine'
-
-// ── SFX URL cache ─────────────────────────────────────────────
-const _sfxUrlCache = new Map()
-const SFX_CACHE_TTL = 4 * 60 * 1000
-
-async function getSignedSfxUrl(storagePath) {
-  const cached = _sfxUrlCache.get(storagePath)
-  if (cached && Date.now() < cached.expiresAt) return cached.url
-  const { data } = await supabase.storage.from('audio').createSignedUrl(storagePath, 300)
-  if (!data?.signedUrl) return null
-  _sfxUrlCache.set(storagePath, { url: data.signedUrl, expiresAt: Date.now() + SFX_CACHE_TTL })
-  return data.signedUrl
-}
 
 async function hashBuffer(buffer) {
   const digest = await crypto.subtle.digest('SHA-256', buffer)
@@ -29,6 +15,10 @@ function smartShuffle(arr) {
     ;[a[i], a[j]] = [a[j], a[i]]
   }
   return a
+}
+
+function getTrackUrl(storagePath) {
+  return `/tracks/${storagePath}`
 }
 
 // ── Color helpers ──────────────────────────────────────────────
@@ -68,7 +58,6 @@ export function applyIntensityColors(colors) {
   `).join('\n')
 }
 
-// Initialize intensity colors from localStorage immediately on module load
 const _storedIntensityColors = (() => {
   try { return JSON.parse(localStorage.getItem('troubadour-intensity-colors') ?? 'null') ?? DEFAULT_INTENSITY_COLORS }
   catch { return DEFAULT_INTENSITY_COLORS }
@@ -96,7 +85,6 @@ export const PRESET_THEMES = {
   neonvoid:    { label: 'Neon Void' },
 }
 
-// Keep THEMES as an alias so existing imports of THEMES still work
 export const THEMES = PRESET_THEMES
 
 const THEME_VARS = {
@@ -120,14 +108,12 @@ export function applyTheme(name, customOverride) {
   } else {
     const colors = customOverride ?? (() => {
       try {
-        // New multi-preset format
         const activeId = localStorage.getItem('troubadour-active-preset')
         const presets = JSON.parse(localStorage.getItem('troubadour-custom-presets') ?? 'null')
         if (presets && activeId) {
           const preset = presets.find(p => p.id === activeId)
           if (preset) return preset.colors
         }
-        // Legacy single-preset fallback
         return JSON.parse(localStorage.getItem('troubadour-custom-theme') ?? 'null') ?? DEFAULT_CUSTOM_COLORS
       } catch { return DEFAULT_CUSTOM_COLORS }
     })()
@@ -137,10 +123,6 @@ export function applyTheme(name, customOverride) {
 
 // ── Store ──────────────────────────────────────────────────────
 export const useAppStore = create((set, get) => ({
-  // Auth
-  user: null,
-  setUser: (user) => set({ user }),
-
   appError: null,
   setAppError: (msg) => set({ appError: msg }),
   clearAppError: () => set({ appError: null }),
@@ -161,7 +143,6 @@ export const useAppStore = create((set, get) => ({
   activeTheme: localStorage.getItem('troubadour-theme') ?? 'darkfantasy',
   setTheme: (name) => {
     if (name === 'custom') {
-      // Custom requires an active preset — handled by applyCustomPreset instead
       applyTheme('custom', null)
     } else {
       applyTheme(name, null)
@@ -175,7 +156,6 @@ export const useAppStore = create((set, get) => ({
     try {
       const saved = JSON.parse(localStorage.getItem('troubadour-custom-presets') ?? 'null')
       if (saved?.length) return saved
-      // Migrate legacy single custom theme
       const legacy = JSON.parse(localStorage.getItem('troubadour-custom-theme') ?? 'null')
       if (legacy) return [{ id: 'default', name: 'My Theme', colors: { ...DEFAULT_CUSTOM_COLORS, ...legacy } }]
     } catch {}
@@ -262,45 +242,56 @@ export const useAppStore = create((set, get) => ({
   // ── Scenarios (playlists) ──────────────────────────────────
   playlists: [],
   fetchPlaylists: async () => {
-    const { data, error } = await supabase
-      .from('playlists')
-      .select(`*, playlist_tracks(*, audio_assets(*))`)
-      .order('created_at', { ascending: false })
-    if (!error) set({ playlists: data ?? [] })
+    const res = await fetch('/api/playlists')
+    if (res.ok) set({ playlists: await res.json() })
   },
 
   createPlaylist: async ({ name, hasIntensities, intensityCount }) => {
-    const { data, error } = await supabase
-      .from('playlists')
-      .insert({ user_id: get().user?.id, name, has_intensities: hasIntensities, intensity_count: intensityCount })
-      .select()
-      .single()
-    if (error) { get().setAppError('Failed to create scenario: ' + error.message); return null }
-    const newScenario = { ...data, playlist_tracks: [] }
-    set((s) => ({ playlists: [newScenario, ...s.playlists], selectedScenarioId: data.id }))
+    const res = await fetch('/api/playlists', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, has_intensities: hasIntensities, intensity_count: intensityCount }),
+    })
+    if (!res.ok) { get().setAppError('Failed to create scenario'); return null }
+    const data = await res.json()
+    set((s) => ({ playlists: [data, ...s.playlists], selectedScenarioId: data.id }))
     return data
   },
 
-  updatePlaylist: async (id, { name, description }) => {
-    // Try with description; fall back gracefully if column doesn't exist yet
-    let error
-    if (description !== undefined) {
-      const res = await supabase.from('playlists').update({ name, description }).eq('id', id)
-      error = res.error
-      if (error?.message?.includes('description')) {
-        const retry = await supabase.from('playlists').update({ name }).eq('id', id)
-        error = retry.error
-        if (!error) get().setAppError('Saved name only — run the DB migration to enable descriptions.')
-      }
-    } else {
-      const res = await supabase.from('playlists').update({ name }).eq('id', id)
-      error = res.error
-    }
-    if (error) { get().setAppError('Failed to update scenario: ' + error.message); return }
+  updatePlaylist: async (id, fields) => {
+    const res = await fetch(`/api/playlists/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(fields),
+    })
+    if (!res.ok) { get().setAppError('Failed to update scenario'); return }
+    const data = await res.json()
     set((s) => ({
-      playlists: s.playlists.map((p) =>
-        p.id === id ? { ...p, name, ...(description !== undefined ? { description } : {}) } : p
-      ),
+      playlists: s.playlists.map((p) => p.id === id ? { ...p, ...data } : p),
+    }))
+  },
+
+  uploadScenarioImage: async (file, blur = 12, darkness = 55) => {
+    const form = new FormData()
+    form.append('file', file)
+    form.append('blur', String(blur))
+    form.append('darkness', String(darkness))
+    const res = await fetch('/api/images/upload', { method: 'POST', body: form })
+    if (!res.ok) return null
+    const { filename, original } = await res.json()
+    return { filename, original }
+  },
+
+  reprocessBackground: async (playlistId, blur, darkness) => {
+    const res = await fetch('/api/images/reprocess', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ playlistId, blur, darkness }),
+    })
+    if (!res.ok) return
+    const { playlist } = await res.json()
+    set((s) => ({
+      playlists: s.playlists.map((p) => p.id === playlistId ? { ...p, ...playlist } : p),
     }))
   },
 
@@ -311,7 +302,7 @@ export const useAppStore = create((set, get) => ({
       const remaining = s.playlists.filter((p) => p.id !== id)
       set({ selectedScenarioId: remaining[0]?.id ?? null })
     }
-    await supabase.from('playlists').delete().eq('id', id)
+    await fetch(`/api/playlists/${id}`, { method: 'DELETE' })
     set((s) => ({ playlists: s.playlists.filter((p) => p.id !== id) }))
   },
 
@@ -324,12 +315,35 @@ export const useAppStore = create((set, get) => ({
   shuffle: true,
   currentTrack: null,
   playedInCycle: [],
+  lastIntensityIndex: (() => {
+    try { return parseInt(localStorage.getItem('troubadour-last-intensity') ?? '0') } catch { return 0 }
+  })(),
+
+  // pinnedStartTracks: { [playlistId_level]: trackId }
+  pinnedStartTracks: (() => {
+    try { return JSON.parse(localStorage.getItem('troubadour-pinned-tracks') ?? '{}') } catch { return {} }
+  })(),
+
+  setPinnedStartTrack: (playlistId, intensityLevel, trackId) => {
+    const key = `${playlistId}_${intensityLevel}`
+    const current = get().pinnedStartTracks
+    let updated
+    if (current[key] === trackId) {
+      const { [key]: _, ...rest } = current
+      updated = rest
+    } else {
+      updated = { ...current, [key]: trackId }
+    }
+    localStorage.setItem('troubadour-pinned-tracks', JSON.stringify(updated))
+    set({ pinnedStartTracks: updated })
+  },
 
   setSelectedScenario: (id) => set({ selectedScenarioId: id }),
   setActivePlaylist: (id) => set({ activePlaylistId: id, activeIntensity: 0, isPlaying: false }),
 
   setActiveIntensity: (level) => {
-    set({ activeIntensity: level, playedInCycle: [] })
+    localStorage.setItem('troubadour-last-intensity', String(level))
+    set({ activeIntensity: level, playedInCycle: [], lastIntensityIndex: level })
     const state = get()
     if (state.isPlaying) state._playNext()
   },
@@ -342,6 +356,8 @@ export const useAppStore = create((set, get) => ({
       set({ appError: `No tracks at this intensity level. Add some tracks first!` })
       return
     }
+
+    localStorage.setItem('troubadour-last-intensity', String(intensityLevel))
     set({
       activePlaylistId: playlist.id,
       selectedScenarioId: playlist.id,
@@ -349,8 +365,27 @@ export const useAppStore = create((set, get) => ({
       isPlaying: true,
       playedInCycle: [],
       isTransitioning: true,
+      lastIntensityIndex: intensityLevel,
     })
-    await get()._playNext(tracks)
+
+    const pinnedKey = `${playlist.id}_${intensityLevel}`
+    const pinnedId = get().pinnedStartTracks[pinnedKey]
+    const pinnedTrack = pinnedId ? tracks.find((t) => t.id === pinnedId) : null
+
+    if (pinnedTrack) {
+      set({ currentTrack: pinnedTrack, playedInCycle: [pinnedTrack.id] })
+      const fadeDuration = get().fadeDuration
+      setTimeout(() => set({ isTransitioning: false }), fadeDuration + 200)
+      const url = getTrackUrl(pinnedTrack.audio_assets.storage_path)
+      audioEngine.playTrack(url, pinnedTrack.id, () => {
+        const s = get()
+        if (!s.isPlaying) return
+        if (s.loopSingle) s._playNext([pinnedTrack])
+        else s._playNext()
+      })
+    } else {
+      await get()._playNext(tracks)
+    }
   },
 
   _playNext: async (tracksOverride = null) => {
@@ -375,15 +410,13 @@ export const useAppStore = create((set, get) => ({
     const fadeDuration = get().fadeDuration
     setTimeout(() => set({ isTransitioning: false }), fadeDuration + 200)
 
-    const signedUrl = await getSignedSfxUrl(chosen.audio_assets.storage_path)
-    if (signedUrl) {
-      audioEngine.playTrack(signedUrl, chosen.id, () => {
-        const s = get()
-        if (!s.isPlaying) return
-        if (s.loopSingle) s._playNext([chosen])
-        else s._playNext()
-      })
-    }
+    const url = getTrackUrl(chosen.audio_assets.storage_path)
+    audioEngine.playTrack(url, chosen.id, () => {
+      const s = get()
+      if (!s.isPlaying) return
+      if (s.loopSingle) s._playNext([chosen])
+      else s._playNext()
+    })
   },
 
   pauseResume: () => {
@@ -410,63 +443,58 @@ export const useAppStore = create((set, get) => ({
   // ── Audio Assets ───────────────────────────────────────────
   audioAssets: [],
   fetchAudioAssets: async () => {
-    const { data } = await supabase.from('audio_assets').select('*').order('name')
-    if (data) set({ audioAssets: data })
+    const res = await fetch('/api/assets')
+    if (res.ok) set({ audioAssets: await res.json() })
+  },
+
+  openLibraryFolder: async () => {
+    await fetch('/api/assets/open-folder', { method: 'POST' })
+  },
+
+  scanLibraryFolder: async () => {
+    const res = await fetch('/api/assets/scan', { method: 'POST' })
+    if (!res.ok) return 0
+    const { added, assets } = await res.json()
+    set({ audioAssets: assets })
+    return added
   },
 
   uploadAudio: async (file) => {
-    const userId = get().user?.id
-    if (!userId) return null
-
     const buffer = await file.arrayBuffer()
     const hash = await hashBuffer(buffer)
 
-    const { data: existing } = await supabase
-      .from('audio_assets').select('*').eq('user_id', userId).eq('file_hash', hash).single()
-    if (existing) return existing
+    const form = new FormData()
+    form.append('file', file)
+    form.append('file_hash', hash)
 
-    const ext = file.name.split('.').pop()
-    const storagePath = `${userId}/${hash}.${ext}`
+    const res = await fetch('/api/assets/upload', { method: 'POST', body: form })
+    if (!res.ok) { console.error('Upload failed'); return null }
+    const asset = await res.json()
 
-    const { error: uploadError } = await supabase.storage
-      .from('audio').upload(storagePath, file, { contentType: file.type, upsert: false })
-
-    if (uploadError && uploadError.message !== 'The resource already exists') {
-      console.error('Upload error', uploadError)
-      return null
-    }
-
-    const { data: asset } = await supabase
-      .from('audio_assets')
-      .insert({ user_id: userId, name: file.name.replace(/\.[^.]+$/, ''), storage_path: storagePath, file_hash: hash, mime_type: file.type, file_size: file.size })
-      .select().single()
-
-    if (asset) set((s) => ({ audioAssets: [...s.audioAssets, asset] }))
+    set((s) => {
+      const exists = s.audioAssets.some(a => a.id === asset.id)
+      return exists ? {} : { audioAssets: [...s.audioAssets, asset] }
+    })
     return asset
   },
 
   addTrackToPlaylist: async (playlistId, assetId, intensityLevel) => {
-    const playlist = get().playlists.find((p) => p.id === playlistId)
-    const tracks = (playlist?.playlist_tracks ?? []).filter((t) => t.intensity_level === intensityLevel)
-    const position = tracks.length
-
-    const { data } = await supabase
-      .from('playlist_tracks')
-      .insert({ playlist_id: playlistId, asset_id: assetId, intensity_level: intensityLevel, position })
-      .select('*, audio_assets(*)')
-      .single()
-
-    if (data) {
-      set((s) => ({
-        playlists: s.playlists.map((p) =>
-          p.id === playlistId ? { ...p, playlist_tracks: [...(p.playlist_tracks ?? []), data] } : p
-        ),
-      }))
-    }
+    const res = await fetch(`/api/playlists/${playlistId}/tracks`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ asset_id: assetId, intensity_level: intensityLevel }),
+    })
+    if (!res.ok) return
+    const data = await res.json()
+    set((s) => ({
+      playlists: s.playlists.map((p) =>
+        p.id === playlistId ? { ...p, playlist_tracks: [...(p.playlist_tracks ?? []), data] } : p
+      ),
+    }))
   },
 
   removeTrackFromPlaylist: async (trackId, playlistId) => {
-    await supabase.from('playlist_tracks').delete().eq('id', trackId)
+    await fetch(`/api/playlists/tracks/${trackId}`, { method: 'DELETE' })
     set((s) => ({
       playlists: s.playlists.map((p) =>
         p.id === playlistId
@@ -479,68 +507,57 @@ export const useAppStore = create((set, get) => ({
   // ── SFX ───────────────────────────────────────────────────
   sfxPanels: [],
   fetchSfxPanels: async () => {
-    const { data } = await supabase
-      .from('sfx_panels').select(`*, sfx_buttons(*, sfx_button_files(*, audio_assets(*)))`).order('position')
-    if (data) set({ sfxPanels: data })
+    const res = await fetch('/api/sfx/panels')
+    if (res.ok) set({ sfxPanels: await res.json() })
   },
 
   createSfxPanel: async (panelType, name) => {
-    const panels = get().sfxPanels.filter((p) => p.panel_type === panelType)
-    const { data, error } = await supabase
-      .from('sfx_panels')
-      .insert({ user_id: get().user?.id, panel_type: panelType, name, position: panels.length })
-      .select().single()
-    if (error) { get().setAppError('Failed to create panel: ' + error.message); return }
-    if (data) set((s) => ({ sfxPanels: [...s.sfxPanels, { ...data, sfx_buttons: [] }] }))
+    const res = await fetch('/api/sfx/panels', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ panel_type: panelType, name }),
+    })
+    if (!res.ok) { get().setAppError('Failed to create panel'); return }
+    const data = await res.json()
+    set((s) => ({ sfxPanels: [...s.sfxPanels, data] }))
   },
 
   deleteSfxPanel: async (id) => {
-    await supabase.from('sfx_panels').delete().eq('id', id)
+    await fetch(`/api/sfx/panels/${id}`, { method: 'DELETE' })
     set((s) => ({ sfxPanels: s.sfxPanels.filter((p) => p.id !== id) }))
   },
 
   sfxButtons: [],
   fetchSfxButtons: async () => {
-    const { data } = await supabase
-      .from('sfx_buttons').select(`*, sfx_button_files(*, audio_assets(*)), sfx_panels(*)`).order('name')
-    if (data) set({ sfxButtons: data })
+    const res = await fetch('/api/sfx/buttons')
+    if (res.ok) set({ sfxButtons: await res.json() })
   },
 
   createSfxButton: async ({ panelId, name, color, assetIds }) => {
-    const panel = get().sfxPanels.find((p) => p.id === panelId)
-    const position = (panel?.sfx_buttons ?? []).length
-
-    const { data: btn, error: btnError } = await supabase
-      .from('sfx_buttons').insert({ user_id: get().user?.id, panel_id: panelId, name, color, position }).select().single()
-    if (btnError) { get().setAppError('Failed to create button: ' + btnError.message); return null }
-    if (!btn) return null
-
-    if (assetIds?.length) {
-      await supabase.from('sfx_button_files').insert(assetIds.map((asset_id) => ({ button_id: btn.id, asset_id })))
-    }
-
-    await get().fetchSfxPanels()
-    await get().fetchSfxButtons()
-    return btn
+    const res = await fetch('/api/sfx/buttons', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ panel_id: panelId, name, color, asset_ids: assetIds }),
+    })
+    if (!res.ok) { get().setAppError('Failed to create button'); return null }
+    const { panels, buttons } = await res.json()
+    set({ sfxPanels: panels, sfxButtons: buttons })
+    return buttons.find(b => b.panel_id === panelId && b.name === name) ?? null
   },
 
   duplicateSfxButton: async (buttonId, targetPanelId, newName) => {
-    const btn = get().sfxButtons.find((b) => b.id === buttonId)
-    if (!btn) return
-
-    const { data: newBtn } = await supabase
-      .from('sfx_buttons').insert({ panel_id: targetPanelId, name: newName ?? `${btn.name} (copy)`, color: btn.color }).select().single()
-    if (!newBtn) return
-
-    const fileInserts = (btn.sfx_button_files ?? []).map((f) => ({ button_id: newBtn.id, asset_id: f.asset_id }))
-    if (fileInserts.length) await supabase.from('sfx_button_files').insert(fileInserts)
-
-    await get().fetchSfxPanels()
-    await get().fetchSfxButtons()
+    const res = await fetch(`/api/sfx/buttons/${buttonId}/duplicate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ target_panel_id: targetPanelId, new_name: newName }),
+    })
+    if (!res.ok) return
+    const { panels, buttons } = await res.json()
+    set({ sfxPanels: panels, sfxButtons: buttons })
   },
 
   deleteSfxButton: async (id) => {
-    await supabase.from('sfx_buttons').delete().eq('id', id)
+    await fetch(`/api/sfx/buttons/${id}`, { method: 'DELETE' })
     set((s) => ({
       sfxButtons: s.sfxButtons.filter((b) => b.id !== id),
       sfxPanels: s.sfxPanels.map((p) => ({
@@ -553,13 +570,18 @@ export const useAppStore = create((set, get) => ({
     const files = button.sfx_button_files ?? []
     if (!files.length) return
     const chosen = files[Math.floor(Math.random() * files.length)]
-    const signedUrl = await getSignedSfxUrl(chosen.audio_assets.storage_path)
-    if (signedUrl) audioEngine.playSfx(signedUrl)
+    const url = getTrackUrl(chosen.audio_assets.storage_path)
+    audioEngine.playSfx(url)
   },
 
   addAssetToSfxButton: async (buttonId, assetId) => {
-    await supabase.from('sfx_button_files').insert({ button_id: buttonId, asset_id: assetId })
-    await get().fetchSfxPanels()
-    await get().fetchSfxButtons()
+    const res = await fetch(`/api/sfx/buttons/${buttonId}/files`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ asset_id: assetId }),
+    })
+    if (!res.ok) return
+    const { panels, buttons } = await res.json()
+    set({ sfxPanels: panels, sfxButtons: buttons })
   },
 }))
