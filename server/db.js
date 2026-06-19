@@ -72,5 +72,18 @@ try { db.exec(`ALTER TABLE playlists ADD COLUMN background_image TEXT`) } catch 
 try { db.exec(`ALTER TABLE playlists ADD COLUMN background_image_original TEXT`) } catch {}
 try { db.exec(`ALTER TABLE playlists ADD COLUMN bg_blur INTEGER DEFAULT 12`) } catch {}
 try { db.exec(`ALTER TABLE playlists ADD COLUMN bg_darkness INTEGER DEFAULT 55`) } catch {}
+try { db.exec(`ALTER TABLE playlists ADD COLUMN scenario_type TEXT NOT NULL DEFAULT 'scene'`) } catch {}
+try { db.exec(`ALTER TABLE audio_assets ADD COLUMN artist TEXT`) } catch {}
+try { db.exec(`ALTER TABLE audio_assets ADD COLUMN album TEXT`) } catch {}
+try { db.exec(`ALTER TABLE audio_assets ADD COLUMN cover_art_path TEXT`) } catch {}
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS asset_tags (
+    id       TEXT PRIMARY KEY,
+    asset_id TEXT NOT NULL REFERENCES audio_assets(id) ON DELETE CASCADE,
+    tag      TEXT NOT NULL,
+    UNIQUE(asset_id, tag)
+  );
+`)
 
 export default db

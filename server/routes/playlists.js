@@ -7,7 +7,7 @@ const router = Router()
 router.get('/', (_req, res) => {
   const playlists = db.prepare(`SELECT * FROM playlists ORDER BY created_at DESC`).all()
   const tracks = db.prepare(`
-    SELECT pt.*, a.id as a_id, a.name as a_name, a.storage_path, a.file_hash, a.mime_type, a.duration_sec, a.file_size
+    SELECT pt.*, a.id as a_id, a.name as a_name, a.storage_path, a.file_hash, a.mime_type, a.duration_sec, a.file_size, a.artist, a.album, a.cover_art_path
     FROM playlist_tracks pt
     JOIN audio_assets a ON a.id = pt.asset_id
   `).all()
@@ -32,6 +32,9 @@ router.get('/', (_req, res) => {
           mime_type: t.mime_type,
           duration_sec: t.duration_sec,
           file_size: t.file_size,
+          artist: t.artist,
+          album: t.album,
+          cover_art_path: t.cover_art_path,
         },
       })),
   }))
@@ -39,19 +42,19 @@ router.get('/', (_req, res) => {
 })
 
 router.post('/', (req, res) => {
-  const { name, has_intensities, intensity_count } = req.body
+  const { name, has_intensities, intensity_count, scenario_type } = req.body
   if (!name) return res.status(400).json({ error: 'name required' })
   const id = randomUUID()
   db.prepare(`
-    INSERT INTO playlists (id, name, has_intensities, intensity_count)
-    VALUES (?, ?, ?, ?)
-  `).run(id, name, has_intensities ? 1 : 0, intensity_count ?? 3)
+    INSERT INTO playlists (id, name, has_intensities, intensity_count, scenario_type)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(id, name, has_intensities ? 1 : 0, intensity_count ?? 3, scenario_type ?? 'scene')
   const row = db.prepare(`SELECT * FROM playlists WHERE id = ?`).get(id)
   res.json({ ...row, has_intensities: !!row.has_intensities, playlist_tracks: [] })
 })
 
 router.put('/:id', (req, res) => {
-  const { name, description, background_image, background_image_original, bg_blur, bg_darkness } = req.body
+  const { name, description, background_image, background_image_original, bg_blur, bg_darkness, scenario_type } = req.body
   const current = db.prepare(`SELECT * FROM playlists WHERE id = ?`).get(req.params.id)
   if (!current) return res.status(404).json({ error: 'Not found' })
   db.prepare(`
@@ -62,6 +65,7 @@ router.put('/:id', (req, res) => {
       background_image_original = ?,
       bg_blur = ?,
       bg_darkness = ?,
+      scenario_type = ?,
       updated_at = datetime('now')
     WHERE id = ?
   `).run(
@@ -71,6 +75,7 @@ router.put('/:id', (req, res) => {
     background_image_original !== undefined ? background_image_original : current.background_image_original,
     bg_blur !== undefined ? bg_blur : current.bg_blur,
     bg_darkness !== undefined ? bg_darkness : current.bg_darkness,
+    scenario_type ?? current.scenario_type ?? 'scene',
     req.params.id
   )
   const row = db.prepare(`SELECT * FROM playlists WHERE id = ?`).get(req.params.id)
@@ -95,7 +100,7 @@ router.post('/:id/tracks', (req, res) => {
   `).run(id, req.params.id, asset_id, intensity_level ?? 0, pos.c)
 
   const row = db.prepare(`
-    SELECT pt.*, a.id as a_id, a.name as a_name, a.storage_path, a.file_hash, a.mime_type, a.duration_sec, a.file_size
+    SELECT pt.*, a.id as a_id, a.name as a_name, a.storage_path, a.file_hash, a.mime_type, a.duration_sec, a.file_size, a.artist, a.album, a.cover_art_path
     FROM playlist_tracks pt JOIN audio_assets a ON a.id = pt.asset_id WHERE pt.id = ?
   `).get(id)
 
@@ -110,6 +115,7 @@ router.post('/:id/tracks', (req, res) => {
       id: row.a_id, name: row.a_name, storage_path: row.storage_path,
       file_hash: row.file_hash, mime_type: row.mime_type,
       duration_sec: row.duration_sec, file_size: row.file_size,
+      artist: row.artist, album: row.album, cover_art_path: row.cover_art_path,
     },
   })
 })

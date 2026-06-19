@@ -4,6 +4,54 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-19 (session 8)
+
+### Added
+- **Music Library panel** — new dedicated view (accessible via "Music Library" entry at the top of the sidebar) showing all audio assets with cover art, artist, album metadata. Includes a seekable preview player (independent of scenario playback), full-text search by name/artist/album, tag filter pills, inline tag management (add/remove tags per track), and "Add to Scenario" popover to assign a track to any scenario/intensity without leaving the library.
+- **Song tags** — users can tag audio assets with custom labels (e.g. "angry", "upbeat", "intense"). Tags persist in a new `asset_tags` SQLite table and are displayed as chips on tracks in the library. Tag filter pills appear above the track list when any tags exist.
+- **Audio metadata extraction** — artist, album, and embedded cover art are automatically extracted on upload and scan using `music-metadata`. Cover art images are saved to `images/covers/` and served statically. Existing assets can gain metadata by re-scanning.
+- **Rich track rows** — tracks in scenario playlists now show a 32×32 cover art thumbnail (fallback to music icon), track name, and artist below it, mirroring how audio players like Spotify display tracks.
+- **Click-to-play in scenario playlist** — clicking any track row in the scenario panel now immediately starts playback from that track (replaces the old play-from-random behavior for that click action). Pin/delete buttons still work via their own click targets.
+- **Scenario types** — each scenario now has a required type: `scene` (director's clapperboard icon), `combat` (crossed swords icon), or `location` (map pin icon). The type icon appears before the scenario name in the sidebar. Type can be set on creation and changed in the edit modal.
+- **Scenario search/filter** — a search input in the sidebar filters the scenario list by name in real time.
+- **Tags API** — new `/api/tags/asset/:id` endpoints (GET, POST, DELETE) for managing per-asset tags.
+- **`previewEngine`** — lightweight Howler.js singleton for library preview playback, independent of the main `audioEngine` used by scenarios.
+
+### Changed
+- **Pin button tooltip** updated from "Start from this track" to "Always start here" to better convey the intent.
+- **Scenario creation wizard** now includes a Scenario Type selector as the first step (defaults to Scene).
+- **Edit Scenario modal** now includes a Scenario Type selector.
+- `GET /api/assets` now returns `tags[]` array on each asset.
+- `POST/PUT /api/playlists` now accepts and returns `scenario_type`.
+- Playlist tracks in API responses now include `artist`, `album`, `cover_art_path` from the joined audio asset.
+
+---
+
+## [Unreleased] — 2026-06-19 (session 7)
+
+### Changed
+- **Darkness is now a live CSS overlay, not baked into the image** — `sharp` now only applies blur to background images. The "Darkness" slider (renamed "Overlay") controls a `rgba(--color-darkbg / opacity)` layer applied at render time in `App.jsx` and `ScenarioControlPanel.jsx`. This means overlay changes are instant with no server round-trip, and the blur/overlay are fully independent.
+- **Reprocess no longer fires on overlay-only changes** — `EditScenarioModal` only calls `reprocessBackground` when the blur value changes (or a legacy image needs adopting), since overlay is now CSS-only.
+- Existing Zen Garden `_bg.jpg` reprocessed to strip the previously baked-in darkness.
+
+---
+
+## [Unreleased] — 2026-06-19 (session 6)
+
+### Changed
+- **Dev server split into two preview configs** — `troubadour-api` (Express, port 3001) and `troubadour` (Vite, port 5173) are now separate launch configs in `.claude/launch.json`. Fixes a bug where the preview tool injected `PORT=5173` into `npm run dev`, causing Express to steal Vite's port and break the API proxy. Express now reads `SERVER_PORT` instead of `PORT`.
+- **CLAUDE.md server restart protocol** — Documents the required restart steps (kill node, stop preview, start api then ui) to run after every source edit.
+
+### Fixed
+- **Background blur now actually works** — Diagnosed that legacy images (uploaded before the `sharp` pipeline) were stored as plain `uuid.jpg` with no `_orig` counterpart, causing the processed `_bg.jpg` to never be generated. The `/reprocess` endpoint now detects legacy images, copies the file as `_orig`, produces a proper blurred `_bg.jpg`, and updates `background_image` in the DB to point to the processed version.
+- **Removed silent fallback on upload failure** — Upload errors now return HTTP 500 with a message instead of silently serving the unblurred original. A user-visible error is shown in the Edit Scenario modal.
+- **Edit Scenario modal triggers reprocess for legacy images** — Previously skipped if `background_image_original` was null; now always reprocesses when there is an existing image and the original is missing, so old scenarios get blurred backgrounds on next save.
+
+### Added
+- **`panel-frost` CSS utility** — Zero-GPU-cost frosted-glass panel style (subtle border + inset highlight + shadow depth) that pairs with the server-blurred background image. Applied to all `ScenarioControlPanel` sections when a background image is active, replacing the old `bg-midnight/50` solid overlays.
+
+---
+
 ## [Unreleased] — 2026-06-19 (session 5)
 
 ### Changed

@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { audioEngine } from '../lib/audioEngine'
+import { previewEngine } from '../lib/previewEngine'
 
 async function hashBuffer(buffer) {
   const digest = await crypto.subtle.digest('SHA-256', buffer)
@@ -246,11 +247,11 @@ export const useAppStore = create((set, get) => ({
     if (res.ok) set({ playlists: await res.json() })
   },
 
-  createPlaylist: async ({ name, hasIntensities, intensityCount }) => {
+  createPlaylist: async ({ name, hasIntensities, intensityCount, scenarioType }) => {
     const res = await fetch('/api/playlists', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, has_intensities: hasIntensities, intensity_count: intensityCount }),
+      body: JSON.stringify({ name, has_intensities: hasIntensities, intensity_count: intensityCount, scenario_type: scenarioType ?? 'scene' }),
     })
     if (!res.ok) { get().setAppError('Failed to create scenario'); return null }
     const data = await res.json()
@@ -438,6 +439,77 @@ export const useAppStore = create((set, get) => ({
   skipTrack: () => {
     const s = get()
     if (s.isPlaying) s._playNext()
+  },
+
+  startPlaylistAtTrack: (playlist, intensityLevel, trackId) => {
+    const tracks = (playlist.playlist_tracks ?? []).filter((t) => t.intensity_level === intensityLevel)
+    const track = tracks.find((t) => t.id === trackId)
+    if (!track) return
+
+    localStorage.setItem('troubadour-last-intensity', String(intensityLevel))
+    set({
+      activePlaylistId: playlist.id,
+      selectedScenarioId: playlist.id,
+      activeIntensity: intensityLevel,
+      isPlaying: true,
+      playedInCycle: [trackId],
+      isTransitioning: true,
+      currentTrack: track,
+      lastIntensityIndex: intensityLevel,
+    })
+    const fadeDuration = get().fadeDuration
+    setTimeout(() => set({ isTransitioning: false }), fadeDuration + 200)
+    const url = `/tracks/${track.audio_assets.storage_path}`
+    audioEngine.playTrack(url, track.id, () => {
+      const s = get()
+      if (!s.isPlaying) return
+      if (s.loopSingle) s._playNext([track])
+      else s._playNext()
+    })
+  },
+
+  // ── Library Preview ────────────────────────────────────────
+  libraryPreview: { assetId: null, isPlaying: false },
+
+  playLibraryPreview: (asset) => {
+    const url = `/tracks/${asset.storage_path}`
+    set({ libraryPreview: { assetId: asset.id, isPlaying: true } })
+    previewEngine.play(url, () => set({ libraryPreview: { assetId: null, isPlaying: false } }))
+  },
+
+  pauseLibraryPreview: () => {
+    const s = get()
+    if (s.libraryPreview.isPlaying) {
+      previewEngine.pause()
+      set({ libraryPreview: { ...s.libraryPreview, isPlaying: false } })
+    } else {
+      previewEngine.resume()
+      set({ libraryPreview: { ...s.libraryPreview, isPlaying: true } })
+    }
+  },
+
+  stopLibraryPreview: () => {
+    previewEngine.stop()
+    set({ libraryPreview: { assetId: null, isPlaying: false } })
+  },
+
+  // ── Tags ───────────────────────────────────────────────────
+  addTagToAsset: async (assetId, tag) => {
+    const res = await fetch(`/api/tags/asset/${assetId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tag }),
+    })
+    if (!res.ok) return
+    const tags = await res.json()
+    set((s) => ({ audioAssets: s.audioAssets.map((a) => a.id === assetId ? { ...a, tags } : a) }))
+  },
+
+  removeTagFromAsset: async (assetId, tag) => {
+    const res = await fetch(`/api/tags/asset/${assetId}/${encodeURIComponent(tag)}`, { method: 'DELETE' })
+    if (!res.ok) return
+    const tags = await res.json()
+    set((s) => ({ audioAssets: s.audioAssets.map((a) => a.id === assetId ? { ...a, tags } : a) }))
   },
 
   // ── Audio Assets ───────────────────────────────────────────

@@ -28,9 +28,10 @@ export default function ScenarioControlPanel() {
   const pauseResume         = useAppStore((s) => s.pauseResume)
   const stopPlayback        = useAppStore((s) => s.stopPlayback)
   const skipTrack           = useAppStore((s) => s.skipTrack)
-  const removeTrack         = useAppStore((s) => s.removeTrackFromPlaylist)
-  const pinnedStartTracks   = useAppStore((s) => s.pinnedStartTracks)
-  const setPinnedStartTrack = useAppStore((s) => s.setPinnedStartTrack)
+  const removeTrack             = useAppStore((s) => s.removeTrackFromPlaylist)
+  const pinnedStartTracks       = useAppStore((s) => s.pinnedStartTracks)
+  const setPinnedStartTrack     = useAppStore((s) => s.setPinnedStartTrack)
+  const startPlaylistAtTrack    = useAppStore((s) => s.startPlaylistAtTrack)
 
   const [addTrackFor, setAddTrackFor]         = useState(null)
   const [editingScenario, setEditingScenario] = useState(false)
@@ -145,7 +146,7 @@ export default function ScenarioControlPanel() {
             className="absolute inset-0 bg-cover bg-center z-0 pointer-events-none"
             style={{ backgroundImage: `url(${bgImage})` }}
           />
-          <div className="absolute inset-0 bg-darkbg/75 z-0 pointer-events-none" />
+          <div className="absolute inset-0 z-0 pointer-events-none" style={{ backgroundColor: `rgb(var(--color-darkbg) / ${(scenario.bg_darkness ?? 55) / 100})` }} />
         </>
       )}
 
@@ -153,7 +154,7 @@ export default function ScenarioControlPanel() {
       <div className="relative z-10 flex flex-col h-full">
 
         {/* Top: Disk + Now Playing */}
-        <div className={`flex items-center gap-6 px-6 py-5 border-b border-border shrink-0 ${bgImage ? 'bg-midnight/50 bg-midnight/30' : 'bg-midnight/40'}`}>
+        <div className={`flex items-center gap-6 px-6 py-5 border-b border-border shrink-0 ${bgImage ? 'panel-frost' : 'bg-midnight/40'}`}>
           <div className="shrink-0">
             <ScenarioDisk
               isPlaying={isActiveScenario && isPlaying}
@@ -221,7 +222,7 @@ export default function ScenarioControlPanel() {
 
         {/* Intensity buttons — full width, equal sizing */}
         {scenario.has_intensities && (
-          <div className={`border-b border-border shrink-0 ${bgImage ? 'bg-midnight/50 bg-midnight/30' : ''}`}>
+          <div className={`border-b border-border shrink-0 ${bgImage ? 'panel-frost' : ''}`}>
             <div className="flex">
               {Array.from({ length: intensityCount }, (_, i) => {
                 const isCurrentIntensity = isActiveScenario && activeIntensity === i
@@ -256,7 +257,7 @@ export default function ScenarioControlPanel() {
         )}
 
         {/* Playback transport */}
-        <div className={`px-6 py-4 border-b border-border shrink-0 ${bgImage ? 'bg-midnight/50 bg-midnight/30' : ''}`}>
+        <div className={`px-6 py-4 border-b border-border shrink-0 ${bgImage ? 'panel-frost' : ''}`}>
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <button
@@ -295,7 +296,7 @@ export default function ScenarioControlPanel() {
         </div>
 
         {/* Track list */}
-        <div className={`flex-1 px-6 py-4 space-y-4 ${bgImage ? 'bg-midnight/40 bg-midnight/20' : ''}`}>
+        <div className={`flex-1 px-6 py-4 space-y-4 ${bgImage ? 'panel-frost' : ''}`}>
           <div>
             <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-2">
               {scenario.has_intensities ? `${INTENSITY_LABELS[displayIntensity]} Tracks` : 'Tracks'}
@@ -309,36 +310,58 @@ export default function ScenarioControlPanel() {
                   const isCurrent  = isActiveScenario && currentTrack?.id === track.id
                   const pinnedKey  = `${scenario.id}_${displayIntensity}`
                   const isPinned   = pinnedStartTracks[pinnedKey] === track.id
+                  const asset      = track.audio_assets
 
                   return (
                     <div
                       key={track.id}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg group/track transition-colors ${
+                      onClick={() => startPlaylistAtTrack(scenario, displayIntensity, track.id)}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg group/track transition-colors cursor-pointer ${
                         isCurrent ? 'bg-gold/10' : 'hover:bg-border/40'
                       }`}
                     >
-                      <Music2 size={12} className={isCurrent ? 'text-gold' : 'text-gray-600'} />
-                      <span className={`text-xs flex-1 truncate ${isCurrent ? 'text-gold' : 'text-gray-400'}`}>
-                        {track.audio_assets?.name}
-                      </span>
+                      {/* Cover art or icon */}
+                      <div className="relative shrink-0">
+                        {asset?.cover_art_path ? (
+                          <img
+                            src={`/images/covers/${asset.cover_art_path}`}
+                            alt="cover"
+                            className="w-8 h-8 rounded object-cover"
+                            onError={e => { e.target.style.display = 'none' }}
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded bg-panel/60 flex items-center justify-center">
+                            <Music2 size={13} className={isCurrent ? 'text-gold' : 'text-gray-600'} />
+                          </div>
+                        )}
+                        {isCurrent && isPlaying && (
+                          <div className="absolute inset-0 flex items-center justify-center gap-0.5 bg-black/50 rounded">
+                            {[0, 1, 2].map((i) => (
+                              <div key={i} className="w-0.5 h-3 bg-gold rounded-full animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Name + artist */}
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-xs truncate font-medium ${isCurrent ? 'text-gold' : 'text-gray-300'}`}>
+                          {asset?.name}
+                        </p>
+                        {asset?.artist && (
+                          <p className="text-[10px] text-gray-600 truncate">{asset.artist}</p>
+                        )}
+                      </div>
 
                       {isPinned && (
-                        <Pin size={10} className="text-gold shrink-0" fill="currentColor" title="Start here" />
-                      )}
-
-                      {isCurrent && isPlaying && (
-                        <div className="flex gap-0.5">
-                          {[0, 1, 2].map((i) => (
-                            <div key={i} className="w-0.5 h-3 bg-gold rounded-full animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
-                          ))}
-                        </div>
+                        <Pin size={10} className="text-gold shrink-0" fill="currentColor" title="Always starts here" />
                       )}
 
                       {/* Pin button — shown on hover */}
                       <button
-                        onClick={() => setPinnedStartTrack(scenario.id, displayIntensity, track.id)}
-                        title={isPinned ? 'Remove start pin' : 'Start from this track'}
-                        className={`opacity-0 group-hover/track:opacity-100 transition-all ${
+                        onClick={(e) => { e.stopPropagation(); setPinnedStartTrack(scenario.id, displayIntensity, track.id) }}
+                        title={isPinned ? 'Remove start pin' : 'Always start here'}
+                        className={`opacity-0 group-hover/track:opacity-100 transition-all shrink-0 ${
                           isPinned ? 'text-gold' : 'text-gray-600 hover:text-gold'
                         }`}
                       >
@@ -346,8 +369,8 @@ export default function ScenarioControlPanel() {
                       </button>
 
                       <button
-                        onClick={() => removeTrack(track.id, scenario.id)}
-                        className="opacity-0 group-hover/track:opacity-100 text-gray-600 hover:text-red-400 transition-all"
+                        onClick={(e) => { e.stopPropagation(); removeTrack(track.id, scenario.id) }}
+                        className="opacity-0 group-hover/track:opacity-100 text-gray-600 hover:text-red-400 transition-all shrink-0"
                       >
                         <Trash2 size={12} />
                       </button>

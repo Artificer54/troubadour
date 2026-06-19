@@ -1,7 +1,14 @@
 import { useState, useRef } from 'react'
 import { Image, X, Upload } from 'lucide-react'
 import Modal from '../ui/Modal'
+import ScenarioTypeIcon from '../ui/ScenarioTypeIcon'
 import { useAppStore } from '../../store/useAppStore'
+
+const SCENARIO_TYPES = [
+  { value: 'scene',    label: 'Scene' },
+  { value: 'combat',  label: 'Combat' },
+  { value: 'location',label: 'Location' },
+]
 
 export default function EditScenarioModal({ scenario, onClose }) {
   const updatePlaylist      = useAppStore((s) => s.updatePlaylist)
@@ -10,6 +17,7 @@ export default function EditScenarioModal({ scenario, onClose }) {
 
   const [name, setName]               = useState(scenario.name ?? '')
   const [description, setDescription] = useState(scenario.description ?? '')
+  const [scenarioType, setScenarioType] = useState(scenario.scenario_type ?? 'scene')
   const [bgImageFile, setBgImageFile] = useState(null)
   const [bgPreview, setBgPreview]     = useState(
     scenario.background_image ? `/images/${scenario.background_image}` : null
@@ -18,10 +26,10 @@ export default function EditScenarioModal({ scenario, onClose }) {
   const [blur, setBlur]               = useState(scenario.bg_blur     ?? 12)
   const [darkness, setDarkness]       = useState(scenario.bg_darkness ?? 55)
   const [loading, setLoading]         = useState(false)
+  const [imageError, setImageError]   = useState(null)
   const fileInputRef = useRef()
 
   const hasExistingImage = !!scenario.background_image
-  const canReprocess     = !!scenario.background_image_original
 
   const handleImageFile = (file) => {
     if (!file || !file.type.startsWith('image/')) return
@@ -41,17 +49,22 @@ export default function EditScenarioModal({ scenario, onClose }) {
     if (!name.trim()) return
     setLoading(true)
 
-    const fields = { name: name.trim(), description: description.trim() }
+    const fields = { name: name.trim(), description: description.trim(), scenario_type: scenarioType }
+
+    setImageError(null)
 
     if (bgImageFile) {
       // New image picked — upload with current blur/darkness, replace old
       const result = await uploadScenarioImage(bgImageFile, blur, darkness)
-      if (result) {
-        fields.background_image          = result.filename
-        fields.background_image_original = result.original
-        fields.bg_blur                   = blur
-        fields.bg_darkness               = darkness
+      if (!result) {
+        setImageError('Image processing failed. Try a different image or adjust settings.')
+        setLoading(false)
+        return
       }
+      fields.background_image          = result.filename
+      fields.background_image_original = result.original
+      fields.bg_blur                   = blur
+      fields.bg_darkness               = darkness
     } else if (removeImage) {
       fields.background_image          = null
       fields.background_image_original = null
@@ -60,8 +73,9 @@ export default function EditScenarioModal({ scenario, onClose }) {
     } else if (hasExistingImage) {
       const blurChanged     = blur     !== (scenario.bg_blur     ?? 12)
       const darknessChanged = darkness !== (scenario.bg_darkness ?? 55)
-      if (canReprocess && (blurChanged || darknessChanged)) {
-        // Re-run sharp on the stored original with new settings
+      // Always reprocess if sliders changed OR if this is a legacy image without a processed version
+      const needsProcess = blurChanged || !scenario.background_image_original
+      if (needsProcess) {
         await reprocessBackground(scenario.id, blur, darkness)
       }
       fields.bg_blur     = blur
@@ -76,6 +90,28 @@ export default function EditScenarioModal({ scenario, onClose }) {
   return (
     <Modal title="Edit Scenario" onClose={onClose}>
       <form onSubmit={submit} className="space-y-4">
+        {/* Scenario type */}
+        <div>
+          <label className="text-xs text-gray-400 uppercase tracking-wider mb-2 block">Scenario Type</label>
+          <div className="flex gap-2">
+            {SCENARIO_TYPES.map(({ value, label }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setScenarioType(value)}
+                className={`flex-1 flex flex-col items-center gap-1.5 py-2 rounded-lg border-2 text-xs font-medium transition-all ${
+                  scenarioType === value
+                    ? 'border-gold bg-gold/10 text-gold'
+                    : 'border-border text-gray-500 hover:border-gray-400 hover:text-gray-300'
+                }`}
+              >
+                <ScenarioTypeIcon type={value} size={16} />
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div>
           <label className="text-xs text-gray-400 uppercase tracking-wider mb-1 block">Scenario Name</label>
           <input
@@ -141,18 +177,14 @@ export default function EditScenarioModal({ scenario, onClose }) {
                 </div>
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <label className="text-xs text-gray-400">Darkness</label>
+                    <label className="text-xs text-gray-400">Overlay</label>
                     <span className="text-xs font-mono text-gold">{darkness}%</span>
                   </div>
                   <input type="range" min="0" max="90" step="5" value={darkness}
                     onChange={(e) => setDarkness(+e.target.value)} className="w-full accent-gold" />
                 </div>
                 <p className="text-[10px] text-gray-600">
-                  {bgImageFile
-                    ? 'Effects baked into image on save'
-                    : canReprocess
-                    ? 'Effects reprocessed from original on save'
-                    : 'Re-upload image to apply blur/darkness changes'}
+                  {bgImageFile ? 'Blur baked into image on save — overlay applies live' : 'Blur reprocessed on save — overlay applies live'}
                 </p>
               </div>
             </div>
@@ -175,6 +207,10 @@ export default function EditScenarioModal({ scenario, onClose }) {
             onChange={(e) => handleImageFile(e.target.files[0])}
           />
         </div>
+
+        {imageError && (
+          <p className="text-xs text-red-400 bg-red-950/40 border border-red-800/50 rounded px-3 py-2">{imageError}</p>
+        )}
 
         <div className="flex gap-3 pt-2">
           <button type="button" onClick={onClose} className="btn-secondary flex-1">Cancel</button>

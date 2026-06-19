@@ -3,6 +3,7 @@ import { Music, Zap, X, Settings } from 'lucide-react'
 import { useAppStore, applyTheme, applyIntensityColors } from './store/useAppStore'
 import ScenarioSidebar from './components/scenario/ScenarioSidebar'
 import ScenarioControlPanel from './components/scenario/ScenarioControlPanel'
+import LibraryPanel from './components/library/LibraryPanel'
 import SfxMatrix from './components/sfx/SfxMatrix'
 import SettingsModal from './components/ui/SettingsModal'
 import SplashScreen from './components/ui/SplashScreen'
@@ -31,6 +32,7 @@ export default function App() {
   const bgImage = selectedScenario?.background_image
     ? `/images/${selectedScenario.background_image}?v=${encodeURIComponent(selectedScenario.updated_at ?? '')}`
     : null
+  const bgOverlay = (selectedScenario?.bg_darkness ?? 55) / 100
 
   useEffect(() => {
     const state = useAppStore.getState()
@@ -62,7 +64,7 @@ export default function App() {
               className="fixed inset-0 z-0 bg-cover bg-center pointer-events-none"
               style={{ backgroundImage: `url(${bgImage})` }}
             />
-            <div className="fixed inset-0 z-0 bg-darkbg/80 pointer-events-none" />
+            <div className="fixed inset-0 z-0 pointer-events-none" style={{ backgroundColor: `rgb(var(--color-darkbg) / ${bgOverlay})` }} />
           </>
         )}
 
@@ -101,7 +103,7 @@ export default function App() {
                 <ScenarioSidebar />
               </div>
               <div className="flex-1 flex flex-col overflow-hidden border-x border-border">
-                <ScenarioControlPanel />
+                {selectedId === '__library__' ? <LibraryPanel /> : <ScenarioControlPanel />}
               </div>
               <div className={`w-80 lg:w-96 xl:w-[420px] shrink-0 flex flex-col overflow-hidden ${bgImage ? 'bg-midnight/60 bg-midnight/40' : ''}`}>
                 <SfxMatrix />
@@ -117,7 +119,7 @@ export default function App() {
                       <ScenarioSidebar />
                     </div>
                     <div className="flex-1 overflow-hidden">
-                      <ScenarioControlPanel />
+                      {selectedId === '__library__' ? <LibraryPanel /> : <ScenarioControlPanel />}
                     </div>
                   </div>
                 ) : (

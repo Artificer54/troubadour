@@ -2,7 +2,14 @@ import { useState, useRef } from 'react'
 import { Search, Music, Image, X, Check, ChevronRight, ChevronLeft, Upload, FolderOpen, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
 import Modal from '../ui/Modal'
 import FileUpload from '../ui/FileUpload'
+import ScenarioTypeIcon from '../ui/ScenarioTypeIcon'
 import { useAppStore } from '../../store/useAppStore'
+
+const SCENARIO_TYPES = [
+  { value: 'scene',    label: 'Scene' },
+  { value: 'combat',  label: 'Combat' },
+  { value: 'location',label: 'Location' },
+]
 
 const INTENSITY_NAMES = ['Calm', 'Tense', 'Intense', 'Frantic', 'Legendary']
 
@@ -19,6 +26,7 @@ export default function CreatePlaylistModal({ onClose }) {
   // Step 0 = setup, steps 1..N = per-intensity tracks, step N+1 = confirm
   const [step, setStep]               = useState(0)
   const [name, setName]               = useState('')
+  const [scenarioType, setScenarioType] = useState('scene')
   const [hasIntensities, setHasIntensities] = useState(true)
   const [intensityCount, setIntensityCount] = useState(3)
   const [bgImageFile, setBgImageFile] = useState(null)
@@ -81,7 +89,7 @@ export default function CreatePlaylistModal({ onClose }) {
     if (!name.trim()) return
     setLoading(true)
     try {
-      const created = await createPlaylist({ name: name.trim(), hasIntensities, intensityCount: levelCount })
+      const created = await createPlaylist({ name: name.trim(), hasIntensities, intensityCount: levelCount, scenarioType })
       if (!created) return
 
       if (bgImageFile) {
@@ -125,6 +133,28 @@ export default function CreatePlaylistModal({ onClose }) {
     return (
       <Modal title="New Scenario" onClose={onClose}>
         <div className="space-y-5">
+          {/* Scenario type */}
+          <div>
+            <label className="text-xs text-gray-400 uppercase tracking-wider mb-2 block">Scenario Type</label>
+            <div className="flex gap-2">
+              {SCENARIO_TYPES.map(({ value, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setScenarioType(value)}
+                  className={`flex-1 flex flex-col items-center gap-1.5 py-2.5 rounded-lg border-2 text-xs font-medium transition-all ${
+                    scenarioType === value
+                      ? 'border-gold bg-gold/10 text-gold'
+                      : 'border-border text-gray-500 hover:border-gray-400 hover:text-gray-300'
+                  }`}
+                >
+                  <ScenarioTypeIcon type={value} size={18} />
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Name */}
           <div>
             <label className="text-xs text-gray-400 uppercase tracking-wider mb-1 block">Scenario Name</label>
@@ -167,13 +197,13 @@ export default function CreatePlaylistModal({ onClose }) {
                   </div>
                   <div>
                     <div className="flex justify-between items-center mb-1">
-                      <label className="text-xs text-gray-400">Darkness</label>
+                      <label className="text-xs text-gray-400">Overlay</label>
                       <span className="text-xs font-mono text-gold">{darkness}%</span>
                     </div>
                     <input type="range" min="0" max="90" step="5" value={darkness}
                       onChange={(e) => setDarkness(+e.target.value)} className="w-full accent-gold" />
                   </div>
-                  <p className="text-[10px] text-gray-600">Effects baked into image on create</p>
+                  <p className="text-[10px] text-gray-600">Blur baked into image on create — overlay applies live</p>
                 </div>
               </div>
             ) : (

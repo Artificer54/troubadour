@@ -2,13 +2,37 @@ import { Router } from 'express'
 import multer from 'multer'
 import { join, dirname, extname } from 'path'
 import { fileURLToPath } from 'url'
-import { unlink, readdir, stat } from 'fs/promises'
+import { unlink, readdir, stat, mkdir, writeFile } from 'fs/promises'
 import { randomUUID } from 'crypto'
 import { exec } from 'child_process'
 import db from '../db.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const TRACKS_DIR = join(__dirname, '..', '..', 'tracks')
+const COVERS_DIR = join(__dirname, '..', '..', 'images', 'covers')
+
+// Ensure covers directory exists
+mkdir(COVERS_DIR, { recursive: true }).catch(() => {})
+
+async function extractMetadata(filePath, fileHash) {
+  try {
+    const { parseFile } = await import('music-metadata')
+    const meta = await parseFile(filePath, { skipCovers: false })
+    const artist = meta.common.artist ?? null
+    const album  = meta.common.album  ?? null
+    let cover_art_path = null
+    const pic = meta.common.picture?.[0]
+    if (pic) {
+      const ext = pic.format?.includes('png') ? 'png' : 'jpg'
+      const fname = `${fileHash}.${ext}`
+      await writeFile(join(COVERS_DIR, fname), pic.data)
+      cover_art_path = fname
+    }
+    return { artist, album, cover_art_path }
+  } catch {
+    return { artist: null, album: null, cover_art_path: null }
+  }
+}
 
 const storage = multer.diskStorage({
   destination: TRACKS_DIR,
@@ -20,10 +44,16 @@ const router = Router()
 
 router.get('/', (_req, res) => {
   const rows = db.prepare(`SELECT * FROM audio_assets ORDER BY name`).all()
-  res.json(rows)
+  const tags = db.prepare(`SELECT asset_id, tag FROM asset_tags`).all()
+  const tagMap = {}
+  for (const t of tags) {
+    if (!tagMap[t.asset_id]) tagMap[t.asset_id] = []
+    tagMap[t.asset_id].push(t.tag)
+  }
+  res.json(rows.map(r => ({ ...r, tags: tagMap[r.id] ?? [] })))
 })
 
-router.post('/upload', upload.single('file'), (req, res) => {
+router.post('/upload', upload.single('file'), async (req, res) => {
   const { file, body } = req
   if (!file) return res.status(400).json({ error: 'No file provided' })
 
@@ -42,14 +72,17 @@ router.post('/upload', upload.single('file'), (req, res) => {
   const id = randomUUID()
   const name = file.originalname.replace(/\.[^.]+$/, '')
   const storage_path = file.filename
+  const hash = file_hash ?? id
+
+  const { artist, album, cover_art_path } = await extractMetadata(file.path, hash)
 
   db.prepare(`
-    INSERT INTO audio_assets (id, name, storage_path, file_hash, mime_type, duration_sec, file_size)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `).run(id, name, storage_path, file_hash ?? id, file.mimetype, duration_sec ? parseFloat(duration_sec) : null, file.size)
+    INSERT INTO audio_assets (id, name, storage_path, file_hash, mime_type, duration_sec, file_size, artist, album, cover_art_path)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(id, name, storage_path, hash, file.mimetype, duration_sec ? parseFloat(duration_sec) : null, file.size, artist, album, cover_art_path)
 
   const asset = db.prepare(`SELECT * FROM audio_assets WHERE id = ?`).get(id)
-  res.json(asset)
+  res.json({ ...asset, tags: [] })
 })
 
 const AUDIO_EXTS = new Set(['.mp3', '.wav', '.ogg', '.flac', '.aac', '.m4a', '.opus', '.weba'])
@@ -67,12 +100,19 @@ router.post('/scan', async (_req, res) => {
       const stats = await stat(filePath)
       const name = filename.replace(/\.[^.]+$/, '')
       const id = randomUUID()
-      db.prepare(`INSERT OR IGNORE INTO audio_assets (id, name, storage_path, file_hash, mime_type, file_size) VALUES (?, ?, ?, ?, ?, ?)`)
-        .run(id, name, filename, filename, 'audio/mpeg', stats.size)
+      const { artist, album, cover_art_path } = await extractMetadata(filePath, filename)
+      db.prepare(`INSERT OR IGNORE INTO audio_assets (id, name, storage_path, file_hash, mime_type, file_size, artist, album, cover_art_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+        .run(id, name, filename, filename, 'audio/mpeg', stats.size, artist, album, cover_art_path)
       added++
     }
     const rows = db.prepare(`SELECT * FROM audio_assets ORDER BY name`).all()
-    res.json({ added, assets: rows })
+    const tags = db.prepare(`SELECT asset_id, tag FROM asset_tags`).all()
+    const tagMap = {}
+    for (const t of tags) {
+      if (!tagMap[t.asset_id]) tagMap[t.asset_id] = []
+      tagMap[t.asset_id].push(t.tag)
+    }
+    res.json({ added, assets: rows.map(r => ({ ...r, tags: tagMap[r.id] ?? [] })) })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
