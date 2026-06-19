@@ -3,7 +3,7 @@ import { Music, Zap, X, Settings } from 'lucide-react'
 import { useAppStore, applyTheme, applyIntensityColors } from './store/useAppStore'
 import ScenarioSidebar from './components/scenario/ScenarioSidebar'
 import ScenarioControlPanel from './components/scenario/ScenarioControlPanel'
-import LibraryPanel from './components/library/LibraryPanel'
+import LibrarySidebar from './components/library/LibrarySidebar'
 import SfxMatrix from './components/sfx/SfxMatrix'
 import SettingsModal from './components/ui/SettingsModal'
 import SplashScreen from './components/ui/SplashScreen'
@@ -23,6 +23,7 @@ export default function App() {
   const activeTheme     = useAppStore((s) => s.activeTheme)
   const playlists       = useAppStore((s) => s.playlists)
   const selectedId      = useAppStore((s) => s.selectedScenarioId)
+  const libraryOpen     = useAppStore((s) => s.libraryOpen)
 
   const [mobileTab, setMobileTab]   = useState('scenarios')
   const [showSettings, setShowSettings] = useState(false)
@@ -99,11 +100,11 @@ export default function App() {
           <div className="flex-1 overflow-hidden">
             {/* Desktop: 3-column layout */}
             <div className="hidden md:flex h-full">
-              <div className={`w-52 lg:w-60 shrink-0 flex flex-col overflow-hidden ${bgImage ? 'bg-midnight/60 bg-midnight/40' : ''}`}>
-                <ScenarioSidebar />
+              <div className={`shrink-0 flex flex-col overflow-hidden transition-all duration-200 ${libraryOpen ? 'w-96 lg:w-[420px]' : 'w-52 lg:w-60'} ${bgImage ? 'bg-midnight/60' : ''}`}>
+                {libraryOpen ? <LibrarySidebar /> : <ScenarioSidebar />}
               </div>
               <div className="flex-1 flex flex-col overflow-hidden border-x border-border">
-                {selectedId === '__library__' ? <LibraryPanel /> : <ScenarioControlPanel />}
+                <ScenarioControlPanel />
               </div>
               <div className={`w-80 lg:w-96 xl:w-[420px] shrink-0 flex flex-col overflow-hidden ${bgImage ? 'bg-midnight/60 bg-midnight/40' : ''}`}>
                 <SfxMatrix />
@@ -119,7 +120,7 @@ export default function App() {
                       <ScenarioSidebar />
                     </div>
                     <div className="flex-1 overflow-hidden">
-                      {selectedId === '__library__' ? <LibraryPanel /> : <ScenarioControlPanel />}
+                      <ScenarioControlPanel />
                     </div>
                   </div>
                 ) : (

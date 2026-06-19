@@ -7,6 +7,9 @@ All notable changes to Troubadour are recorded here.
 ## [Unreleased] — 2026-06-19 (session 8)
 
 ### Added
+- **Library sidebar** — "Music Library" button in the scenario sidebar now expands the left sidebar (from ~240px to ~420px) into a full library browser, keeping the scenario control panel always visible. Includes seekable preview player, search, tag filters, draggable tracks, and an arrow button to add a track to the current scenario at a chosen intensity.
+- **Drag-and-drop from library to scenario** — tracks in the library sidebar can be dragged directly onto the scenario playlist area; the track is added to the currently-viewed intensity. Drop zone highlights gold when a drag is active.
+- **Scenario type filter** — three-lines filter icon in the scenario sidebar reveals type-filter pills (All / Scene / Combat / Location) for quickly narrowing the scenario list by type.
 - **Music Library panel** — new dedicated view (accessible via "Music Library" entry at the top of the sidebar) showing all audio assets with cover art, artist, album metadata. Includes a seekable preview player (independent of scenario playback), full-text search by name/artist/album, tag filter pills, inline tag management (add/remove tags per track), and "Add to Scenario" popover to assign a track to any scenario/intensity without leaving the library.
 - **Song tags** — users can tag audio assets with custom labels (e.g. "angry", "upbeat", "intense"). Tags persist in a new `asset_tags` SQLite table and are displayed as chips on tracks in the library. Tag filter pills appear above the track list when any tags exist.
 - **Audio metadata extraction** — artist, album, and embedded cover art are automatically extracted on upload and scan using `music-metadata`. Cover art images are saved to `images/covers/` and served statically. Existing assets can gain metadata by re-scanning.

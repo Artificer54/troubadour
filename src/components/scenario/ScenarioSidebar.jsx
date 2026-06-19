@@ -1,8 +1,15 @@
 import { useState } from 'react'
-import { Plus, Trash2, Music2, Play, Pause, Library, Search, X } from 'lucide-react'
+import { Plus, Trash2, Music2, Play, Pause, Library, Search, X, Filter } from 'lucide-react'
 import { useAppStore } from '../../store/useAppStore'
 import CreatePlaylistModal from '../playlist/CreatePlaylistModal'
 import ScenarioTypeIcon from '../ui/ScenarioTypeIcon'
+
+const TYPE_FILTERS = [
+  { value: null,       label: 'All' },
+  { value: 'scene',   label: 'Scene' },
+  { value: 'combat',  label: 'Combat' },
+  { value: 'location',label: 'Location' },
+]
 
 export default function ScenarioSidebar() {
   const playlists = useAppStore((s) => s.playlists)
@@ -10,23 +17,26 @@ export default function ScenarioSidebar() {
   const selectedScenarioId = useAppStore((s) => s.selectedScenarioId)
   const isPlaying = useAppStore((s) => s.isPlaying)
   const setSelectedScenario = useAppStore((s) => s.setSelectedScenario)
+  const setLibraryOpen = useAppStore((s) => s.setLibraryOpen)
   const deletePlaylist = useAppStore((s) => s.deletePlaylist)
   const pauseResume = useAppStore((s) => s.pauseResume)
 
   const [showCreate, setShowCreate] = useState(false)
   const [search, setSearch] = useState('')
+  const [showTypeFilter, setShowTypeFilter] = useState(false)
+  const [typeFilter, setTypeFilter] = useState(null)
 
-  const isLibrarySelected = selectedScenarioId === '__library__'
-
-  const filtered = playlists.filter(p =>
-    !search.trim() || p.name.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = playlists.filter(p => {
+    const matchesSearch = !search.trim() || p.name.toLowerCase().includes(search.toLowerCase())
+    const matchesType = typeFilter === null || (p.scenario_type ?? 'scene') === typeFilter
+    return matchesSearch && matchesType
+  })
 
   return (
     <div className="flex flex-col h-full bg-midnight border-r border-border">
       {/* Header */}
       <div className="px-4 py-3 border-b border-border shrink-0">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-2">
           <h2 className="font-fantasy text-gold text-xs tracking-widest uppercase">Scenarios</h2>
           <button
             onClick={() => setShowCreate(true)}
@@ -38,35 +48,64 @@ export default function ScenarioSidebar() {
           </button>
         </div>
 
-        {/* Search */}
-        <div className="relative mt-2">
-          <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-600" />
-          <input
-            className="input-dark w-full pl-7 pr-6 py-1 text-xs"
-            placeholder="Filter scenarios…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-          {search && (
-            <button onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-300">
-              <X size={10}/>
-            </button>
-          )}
+        {/* Search + type filter toggle */}
+        <div className="flex items-center gap-1.5">
+          <div className="relative flex-1">
+            <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-600" />
+            <input
+              className="input-dark w-full pl-7 pr-6 py-1 text-xs"
+              placeholder="Filter scenarios…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+            {search && (
+              <button onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-300">
+                <X size={10}/>
+              </button>
+            )}
+          </div>
+          <button
+            onClick={() => setShowTypeFilter(v => !v)}
+            title="Filter by type"
+            className={`shrink-0 p-1.5 rounded-md border transition-colors ${
+              typeFilter !== null
+                ? 'border-gold/50 bg-gold/10 text-gold'
+                : 'border-border text-gray-500 hover:text-gold hover:border-gold/40'
+            }`}
+          >
+            <Filter size={11}/>
+          </button>
         </div>
+
+        {/* Type filter pills */}
+        {showTypeFilter && (
+          <div className="flex flex-wrap gap-1 mt-2">
+            {TYPE_FILTERS.map(({ value, label }) => (
+              <button
+                key={label}
+                onClick={() => { setTypeFilter(value); if (value !== null) setShowTypeFilter(false) }}
+                className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] border transition-colors ${
+                  typeFilter === value
+                    ? 'bg-gold/15 border-gold/50 text-gold'
+                    : 'border-border text-gray-500 hover:border-gold/30 hover:text-gray-300'
+                }`}
+              >
+                {value && <ScenarioTypeIcon type={value} size={10} />}
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Library entry — always at top */}
       <div
-        className={`flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-colors border-b border-border ${
-          isLibrarySelected ? 'bg-panel' : 'hover:bg-panel/60'
-        }`}
-        onClick={() => setSelectedScenario('__library__')}
+        className="flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-colors border-b border-border hover:bg-panel/60"
+        onClick={() => setLibraryOpen(true)}
       >
-        <Library size={14} className={isLibrarySelected ? 'text-gold' : 'text-gray-500'} />
+        <Library size={14} className="text-gray-500 shrink-0" />
         <div className="flex-1 min-w-0">
-          <p className={`text-sm font-medium truncate ${isLibrarySelected ? 'text-gold' : 'text-gray-400'}`}>
-            Music Library
-          </p>
+          <p className="text-sm font-medium truncate text-gray-400">Music Library</p>
           <p className="text-[10px] text-gray-600">Browse & preview all tracks</p>
         </div>
       </div>
@@ -82,7 +121,7 @@ export default function ScenarioSidebar() {
             </button>
           </div>
         )}
-        {search && filtered.length === 0 && (
+        {(search || typeFilter) && filtered.length === 0 && (
           <p className="text-xs text-gray-600 text-center py-4">No matches</p>
         )}
 
@@ -124,7 +163,6 @@ export default function ScenarioSidebar() {
                 </p>
               </div>
 
-              {/* Play/pause button — only shown when this scenario is active */}
               {isActive && (
                 <button
                   onClick={(e) => { e.stopPropagation(); pauseResume() }}
@@ -135,7 +173,6 @@ export default function ScenarioSidebar() {
                 </button>
               )}
 
-              {/* Delete on hover */}
               <button
                 onClick={(e) => { e.stopPropagation(); deletePlaylist(playlist.id) }}
                 className="opacity-0 group-hover:opacity-100 p-1 text-gray-600 hover:text-red-400 transition-all shrink-0"

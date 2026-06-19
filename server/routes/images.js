@@ -5,7 +5,8 @@ import { join, dirname, extname } from 'path'
 import { fileURLToPath } from 'url'
 import { randomUUID } from 'crypto'
 import { mkdirSync } from 'fs'
-import { unlink } from 'fs/promises'
+import { unlink, copyFile } from 'fs/promises'
+import { existsSync } from 'fs'
 import db from '../db.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -25,22 +26,10 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 },
 })
 
-async function processImage(origPath, destPath, blur, darkness) {
+async function processImage(origPath, destPath, blur) {
   const sigma = Math.max(0.3, blur) // sharp requires sigma >= 0.3
-  const alpha = Math.round(Math.min(100, Math.max(0, darkness)) / 100 * 255)
-
-  const base = sharp(origPath)
-  const meta = await base.metadata()
-  const w = meta.width
-  const h = meta.height
-
-  const overlay = await sharp({
-    create: { width: w, height: h, channels: 4, background: { r: 0, g: 0, b: 0, alpha } },
-  }).png().toBuffer()
-
   await sharp(origPath)
     .blur(sigma)
-    .composite([{ input: overlay, blend: 'over' }])
     .jpeg({ quality: 85 })
     .toFile(destPath)
 }
@@ -59,12 +48,11 @@ router.post('/upload', upload.single('file'), async (req, res) => {
   const bgPath   = join(IMAGES_DIR, bgName)
 
   try {
-    await processImage(origPath, bgPath, blur, darkness)
+    await processImage(origPath, bgPath, blur)
     res.json({ filename: bgName, original: origName })
   } catch (err) {
-    // If processing fails (e.g. unusual format), fall back to original
     console.error('Image processing failed:', err.message)
-    res.json({ filename: origName, original: origName })
+    res.status(500).json({ error: 'Image processing failed: ' + err.message })
   }
 })
 
@@ -76,21 +64,45 @@ router.post('/reprocess', async (req, res) => {
   const playlist = db.prepare(`SELECT * FROM playlists WHERE id = ?`).get(playlistId)
   if (!playlist) return res.status(404).json({ error: 'Playlist not found' })
 
-  const origName = playlist.background_image_original
-  if (!origName) return res.status(400).json({ error: 'No original image stored' })
+  let origName = playlist.background_image_original
+  let adoptedOriginal = false
+
+  // Legacy images uploaded before the pipeline had no _orig counterpart.
+  // Adopt the current background_image as the original so we can process it.
+  if (!origName) {
+    const current = playlist.background_image
+    if (!current) return res.status(400).json({ error: 'No image stored' })
+
+    const ext = current.match(/\.[^.]+$/)?.[0] ?? '.jpg'
+    const uuid = current.replace(/\.[^.]+$/, '')
+    origName = `${uuid}_orig${ext}`
+    const adoptSrc  = join(IMAGES_DIR, current)
+    const adoptDest = join(IMAGES_DIR, origName)
+
+    if (!existsSync(adoptSrc)) return res.status(404).json({ error: 'Image file not found on disk' })
+    await copyFile(adoptSrc, adoptDest)
+    adoptedOriginal = true
+  }
 
   const origPath = join(IMAGES_DIR, origName)
   const bgName   = origName.replace('_orig', '_bg').replace(/\.[^.]+$/, '.jpg')
   const bgPath   = join(IMAGES_DIR, bgName)
 
   try {
-    await processImage(origPath, bgPath, blur, darkness)
+    await processImage(origPath, bgPath, blur)
 
-    db.prepare(`UPDATE playlists SET bg_blur = ?, bg_darkness = ?, updated_at = datetime('now') WHERE id = ?`)
-      .run(blur, darkness, playlistId)
+    db.prepare(`
+      UPDATE playlists SET
+        background_image = ?,
+        background_image_original = ?,
+        bg_blur = ?,
+        bg_darkness = ?,
+        updated_at = datetime('now')
+      WHERE id = ?
+    `).run(bgName, origName, blur, darkness, playlistId)
 
     const updated = db.prepare(`SELECT * FROM playlists WHERE id = ?`).get(playlistId)
-    res.json({ ok: true, playlist: updated, bgFile: bgName })
+    res.json({ ok: true, playlist: updated, bgFile: bgName, adoptedOriginal })
   } catch (err) {
     console.error('Reprocess failed:', err.message)
     res.status(500).json({ error: err.message })

@@ -273,14 +273,18 @@ export const useAppStore = create((set, get) => ({
   },
 
   uploadScenarioImage: async (file, blur = 12, darkness = 55) => {
-    const form = new FormData()
-    form.append('file', file)
-    form.append('blur', String(blur))
-    form.append('darkness', String(darkness))
-    const res = await fetch('/api/images/upload', { method: 'POST', body: form })
-    if (!res.ok) return null
-    const { filename, original } = await res.json()
-    return { filename, original }
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      form.append('blur', String(blur))
+      form.append('darkness', String(darkness))
+      const res = await fetch('/api/images/upload', { method: 'POST', body: form })
+      if (!res.ok) return null
+      const { filename, original } = await res.json()
+      return { filename, original }
+    } catch {
+      return null
+    }
   },
 
   reprocessBackground: async (playlistId, blur, darkness) => {
@@ -338,6 +342,9 @@ export const useAppStore = create((set, get) => ({
     localStorage.setItem('troubadour-pinned-tracks', JSON.stringify(updated))
     set({ pinnedStartTracks: updated })
   },
+
+  libraryOpen: false,
+  setLibraryOpen: (v) => set({ libraryOpen: v }),
 
   setSelectedScenario: (id) => set({ selectedScenarioId: id }),
   setActivePlaylist: (id) => set({ activePlaylistId: id, activeIntensity: 0, isPlaying: false }),

@@ -2,14 +2,17 @@ export default function ScenarioTypeIcon({ type = 'scene', size = 14, className 
   const s = size
 
   if (type === 'combat') {
+    // ⚔️ emoji-style crossed swords: two swords forming an X, hilts at bottom corners
     return (
-      <svg width={s} height={s} viewBox="0 0 16 16" fill="currentColor" className={className} aria-label="Combat">
-        {/* Crossed swords */}
-        <line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-        <line x1="14" y1="2" x2="2" y2="14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-        {/* Hilts */}
-        <line x1="0" y1="4" x2="4" y2="4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-        <line x1="12" y1="4" x2="16" y2="4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+      <svg width={s} height={s} viewBox="0 0 20 20" fill="none" className={className} aria-label="Combat">
+        {/* Left sword: tip top-right, hilt bottom-left */}
+        <line x1="3" y1="17" x2="17" y2="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+        {/* Left guard */}
+        <line x1="3" y1="7" x2="7" y2="3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        {/* Right sword: tip top-left, hilt bottom-right */}
+        <line x1="17" y1="17" x2="3" y2="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+        {/* Right guard */}
+        <line x1="17" y1="7" x2="13" y2="3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
       </svg>
     )
   }
@@ -22,15 +25,18 @@ export default function ScenarioTypeIcon({ type = 'scene', size = 14, className 
     )
   }
 
-  // scene — director's clapperboard
+  // 🎬 emoji-style clapperboard
   return (
-    <svg width={s} height={s} viewBox="0 0 16 16" fill="currentColor" className={className} aria-label="Scene">
-      <rect x="1" y="5" width="14" height="10" rx="1.2" fill="currentColor" opacity="0.85"/>
-      <rect x="1" y="3" width="14" height="3" rx="1" fill="currentColor"/>
-      {/* Clapper stripes */}
-      <line x1="4" y1="3" x2="3" y2="6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.4"/>
-      <line x1="7.5" y1="3" x2="6.5" y2="6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.4"/>
-      <line x1="11" y1="3" x2="10" y2="6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.4"/>
+    <svg width={s} height={s} viewBox="0 0 20 20" fill="currentColor" className={className} aria-label="Scene">
+      {/* Board body */}
+      <rect x="2" y="8" width="16" height="11" rx="1.5" fill="currentColor"/>
+      {/* Clapper base strip */}
+      <rect x="2" y="5" width="16" height="4" rx="1" fill="currentColor"/>
+      {/* Clapper arm — angled open, above the strip */}
+      <polygon points="2,5 10,1 14,5" fill="currentColor" opacity="0.75"/>
+      {/* Stripe accents on arm */}
+      <line x1="5" y1="5" x2="7" y2="2.4" stroke="white" strokeWidth="1.2" strokeLinecap="round" opacity="0.5"/>
+      <line x1="8.5" y1="5" x2="10.5" y2="2.4" stroke="white" strokeWidth="1.2" strokeLinecap="round" opacity="0.5"/>
     </svg>
   )
 }

@@ -33,8 +33,11 @@ export default function ScenarioControlPanel() {
   const setPinnedStartTrack     = useAppStore((s) => s.setPinnedStartTrack)
   const startPlaylistAtTrack    = useAppStore((s) => s.startPlaylistAtTrack)
 
+  const addTrack = useAppStore((s) => s.addTrackToPlaylist)
+
   const [addTrackFor, setAddTrackFor]         = useState(null)
   const [editingScenario, setEditingScenario] = useState(false)
+  const [dragOver, setDragOver]               = useState(false)
   const [progress, setProgress]               = useState(0)
   const [duration, setDuration]               = useState(0)
   const [elapsed, setElapsed]                 = useState(0)
@@ -296,7 +299,19 @@ export default function ScenarioControlPanel() {
         </div>
 
         {/* Track list */}
-        <div className={`flex-1 px-6 py-4 space-y-4 ${bgImage ? 'panel-frost' : ''}`}>
+        <div
+          className={`flex-1 px-6 py-4 space-y-4 transition-colors ${bgImage ? 'panel-frost' : ''} ${dragOver ? 'bg-gold/5 ring-1 ring-gold/30 ring-inset' : ''}`}
+          onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; setDragOver(true) }}
+          onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOver(false) }}
+          onDrop={async e => {
+            e.preventDefault()
+            setDragOver(false)
+            const assetId = e.dataTransfer.getData('assetId')
+            if (assetId && scenario?.id) {
+              await addTrack(scenario.id, assetId, displayIntensity)
+            }
+          }}
+        >
           <div>
             <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-2">
               {scenario.has_intensities ? `${INTENSITY_LABELS[displayIntensity]} Tracks` : 'Tracks'}
