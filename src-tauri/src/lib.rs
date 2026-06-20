@@ -1,8 +1,5 @@
-#[cfg(not(debug_assertions))]
 use std::process::{Child, Command};
-#[cfg(not(debug_assertions))]
 use std::sync::Mutex;
-#[cfg(not(debug_assertions))]
 use tauri::Manager;
 
 struct ServerProcess(Mutex<Option<Child>>);
@@ -21,7 +18,6 @@ pub fn run() {
                     .unwrap_or_else(|_| std::path::PathBuf::from("."));
                 std::fs::create_dir_all(&user_data).ok();
 
-                // In a packaged build, server/ is copied next to the binary via tauri.conf.json resources
                 let server_script = _app
                     .path()
                     .resource_dir()
@@ -38,7 +34,6 @@ pub fn run() {
 
                 _app.manage(ServerProcess(Mutex::new(Some(child))));
 
-                // Give the server a moment to initialise before the window opens
                 std::thread::sleep(std::time::Duration::from_millis(2000));
             }
 
@@ -48,8 +43,8 @@ pub fn run() {
         .expect("error while building the Tauri application")
         .run(|app, event| {
             if let tauri::RunEvent::Exit = event {
-                // Kill the Express server cleanly when the app quits
-                if let Some(srv) = app.try_state::<ServerProcess>() {
+                #[cfg(not(debug_assertions))]
+                if let Ok(srv) = app.try_state::<ServerProcess>().map(|s| s) {
                     if let Ok(mut guard) = srv.0.lock() {
                         if let Some(mut child) = guard.take() {
                             let _ = child.kill();

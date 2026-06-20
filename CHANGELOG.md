@@ -4,6 +4,13 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-20 (session 10)
+
+### Fixed
+- **Tauri Rust compile error** — `use tauri::Manager` and `struct ServerProcess` were conditionally compiled for release only, but the `run()` closure referenced them unconditionally. Moved all imports and the struct to unconditional scope; cfg-guarded only the sidecar spawn and shutdown logic.
+- **Tauri linker investigation** — diagnosed that the GNU toolchain (`x86_64-pc-windows-gnu`) hits a hard BFD ordinal limit (>65535 exports) when linking Tauri. Added `.cargo/config.toml` documenting the fix: install VS Build Tools via `winget` to enable the MSVC toolchain.
+- **`rust-toolchain.toml`** — added to `src-tauri/` pinning the stable MSVC target so `npm run tauri dev` picks the correct toolchain once VS Build Tools are installed.
+
 ## [Unreleased] — 2026-06-19 (session 9)
 
 ### Added

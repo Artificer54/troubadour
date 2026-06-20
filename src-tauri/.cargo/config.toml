@@ -1,0 +1,4 @@
+# Tauri requires MSVC to build on Windows.
+# Install VS Build Tools first:
+#   winget install Microsoft.VisualStudio.2022.BuildTools --override "--quiet --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.Windows11SDK.26100 --includeRecommended"
+# After installing, delete this file (cargo will auto-detect the MSVC toolchain).
