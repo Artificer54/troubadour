@@ -7,6 +7,7 @@ All notable changes to Troubadour are recorded here.
 ## [Unreleased] — 2026-06-20 (session 12)
 
 ### Added
+- **Android APK build** — `npm run tauri -- android build --apk` produces `app-universal-release-unsigned.apk` (63.7 MB) at `src-tauri/gen/android/app/build/outputs/apk/universal/release/`. Install on Android device and set server URL in Settings → Connection to the PC's IP or Tailscale address.
 - **Network status icon** — WiFi icon with colored dot (green/amber/red) in the app header. Polls `/api/health` every 10 seconds. Clicking opens a popover showing the current server URL, connection status, step-by-step LAN WiFi setup instructions, and Tailscale setup instructions for cross-network sync.
 - **`GET /api/health` endpoint** — lightweight health-check route returning `{ ok: true, ts }` used by the network status indicator.
 - **Bundled Node.js sidecar** — `scripts/prepare-sidecar.js` copies the current `node.exe` into `src-tauri/binaries/` before a production build, so the shipped `.exe` is self-contained (no Node.js installation required on end-user machines).
