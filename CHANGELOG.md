@@ -4,6 +4,11 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-20 (session 11)
+
+### Fixed
+- **Tauri dev window "refused to connect"** — Tauri was opening the WebView2 window before Vite and Express finished booting. Replaced `beforeDevCommand` with a dedicated `npm run tauri:dev` script that uses `concurrently` + `wait-on` to start both servers and explicitly wait for ports 5173 and 3001 to respond before handing off to `tauri dev`.
+
 ## [Unreleased] — 2026-06-20 (session 10)
 
 ### Fixed
