@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Check, Palette, Sliders, RotateCcw, Plus, Trash2, Pencil, X } from 'lucide-react'
+import { Check, Palette, Sliders, RotateCcw, Plus, Trash2, Pencil, X, Wifi } from 'lucide-react'
 import { useAppStore, PRESET_THEMES, DEFAULT_CUSTOM_COLORS } from '../../store/useAppStore'
 import Modal from './Modal'
 
@@ -42,6 +42,10 @@ export default function SettingsModal({ onClose }) {
   const setIntensityColor    = useAppStore((s) => s.setIntensityColor)
   const resetIntensityColors = useAppStore((s) => s.resetIntensityColors)
 
+  const serverUrl    = useAppStore((s) => s.serverUrl)
+  const setServerUrl = useAppStore((s) => s.setServerUrl)
+  const [serverInput, setServerInput] = useState(serverUrl)
+
   const [renamingId, setRenamingId]   = useState(null)
   const [renameValue, setRenameValue] = useState('')
   const [newPresetName, setNewPresetName] = useState('')
@@ -71,8 +75,9 @@ export default function SettingsModal({ onClose }) {
       {/* Tab bar */}
       <div className="flex gap-1 mb-5 border-b border-border pb-3">
         {[
-          { key: 'theme',     label: 'Theme',            icon: Palette },
-          { key: 'intensity', label: 'Intensity Colors', icon: Sliders },
+          { key: 'theme',      label: 'Theme',            icon: Palette },
+          { key: 'intensity',  label: 'Intensity Colors', icon: Sliders },
+          { key: 'connection', label: 'Connection',       icon: Wifi },
         ].map(({ key, label, icon: Icon }) => (
           <button
             key={key}
@@ -286,6 +291,57 @@ export default function SettingsModal({ onClose }) {
           <p className="text-[10px] text-gray-600 pt-1">
             These colors affect the disk glow, active intensity button borders and text, and the sidebar playing indicator.
           </p>
+        </div>
+      )}
+
+      {/* ── Connection tab ─────────────────────────────────────── */}
+      {tab === 'connection' && (
+        <div className="space-y-5">
+          <div>
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Server Address</p>
+            <p className="text-xs text-gray-500 mb-3">
+              The URL of the Troubadour Express server. Keep <code className="bg-midnight px-1 rounded text-gray-300">http://localhost:3001</code> on the desktop app.
+              On a phone or tablet connected to the same WiFi, enter your PC's local IP — e.g. <code className="bg-midnight px-1 rounded text-gray-300">http://192.168.1.10:3001</code>.
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={serverInput}
+                onChange={e => setServerInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') setServerUrl(serverInput.trim()) }}
+                placeholder="http://localhost:3001"
+                className="input-dark flex-1 text-sm font-mono"
+              />
+              <button
+                onClick={() => setServerUrl(serverInput.trim())}
+                className="px-4 py-2 bg-gold text-midnight text-sm font-semibold rounded-lg"
+              >
+                Save
+              </button>
+            </div>
+            {serverUrl !== serverInput.trim() && (
+              <p className="text-[10px] text-amber-400 mt-1">Unsaved — press Save or Enter to apply.</p>
+            )}
+            {serverUrl === serverInput.trim() && serverUrl !== 'http://localhost:3001' && (
+              <p className="text-[10px] text-green-400 mt-1">Connected to remote server.</p>
+            )}
+          </div>
+
+          <div className="border border-border/40 rounded-lg p-3 space-y-1.5">
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-2">How to find your PC's IP</p>
+            <p className="text-xs text-gray-400">1. On your PC, open a terminal and run <code className="bg-midnight px-1 rounded text-gray-300">ipconfig</code></p>
+            <p className="text-xs text-gray-400">2. Look for <span className="text-gray-300">IPv4 Address</span> under your WiFi adapter</p>
+            <p className="text-xs text-gray-400">3. Enter that IP here, keeping port <span className="text-gray-300">3001</span></p>
+            <p className="text-xs text-gray-500 pt-1">Both your PC and phone must be on the same WiFi network.</p>
+          </div>
+
+          <button
+            onClick={() => { setServerInput('http://localhost:3001'); setServerUrl('http://localhost:3001') }}
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gold transition-colors"
+          >
+            <RotateCcw size={11} />
+            Reset to localhost
+          </button>
         </div>
       )}
     </Modal>

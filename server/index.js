@@ -8,6 +8,7 @@ import playlistsRouter from './routes/playlists.js'
 import sfxRouter from './routes/sfx.js'
 import imagesRouter from './routes/images.js'
 import tagsRouter from './routes/tags.js'
+import { DATA_ROOT } from './paths.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, '..')
@@ -25,8 +26,8 @@ app.use('/api/images', imagesRouter)
 app.use('/api/tags', tagsRouter)
 
 // Serve uploaded files
-app.use('/tracks', express.static(join(ROOT, 'tracks')))
-app.use('/images', express.static(join(ROOT, 'images')))
+app.use('/tracks', express.static(join(DATA_ROOT, 'tracks')))
+app.use('/images', express.static(join(DATA_ROOT, 'images')))
 
 // Serve built SPA in production
 const distDir = join(ROOT, 'dist')
@@ -35,6 +36,6 @@ if (existsSync(distDir)) {
   app.use((_req, res) => res.sendFile(join(distDir, 'index.html')))
 }
 
-app.listen(PORT, () => {
-  console.log(`Troubadour server running on http://localhost:${PORT}`)
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Troubadour server running on http://0.0.0.0:${PORT}`)
 })

@@ -2,6 +2,22 @@ import { create } from 'zustand'
 import { audioEngine } from '../lib/audioEngine'
 import { previewEngine } from '../lib/previewEngine'
 
+// Returns the base URL for all API and asset requests.
+// - In Tauri (desktop or mobile), uses the user-configured server URL (default: localhost:3001)
+// - In a plain browser with Vite dev proxy, returns '' so relative paths work
+function getApiBase() {
+  if (typeof window !== 'undefined' && window.__TAURI_INTERNALS__) {
+    try { return localStorage.getItem('troubadour-server-url') ?? 'http://localhost:3001' }
+    catch { return 'http://localhost:3001' }
+  }
+  return ''
+}
+
+// Wraps fetch with the dynamic API base so a single change covers all calls
+function api(path, opts) {
+  return fetch(`${getApiBase()}${path}`, opts)
+}
+
 async function hashBuffer(buffer) {
   const digest = await crypto.subtle.digest('SHA-256', buffer)
   return Array.from(new Uint8Array(digest))
@@ -19,7 +35,7 @@ function smartShuffle(arr) {
 }
 
 function getTrackUrl(storagePath) {
-  return `/tracks/${storagePath}`
+  return `${getApiBase()}/tracks/${storagePath}`
 }
 
 // ── Color helpers ──────────────────────────────────────────────
@@ -140,6 +156,16 @@ export const useAppStore = create((set, get) => ({
   loopSingle: false,
   toggleLoopSingle: () => set((s) => ({ loopSingle: !s.loopSingle })),
 
+  // Server connection (used by Tauri desktop and mobile to reach the Express server)
+  serverUrl: (() => {
+    try { return localStorage.getItem('troubadour-server-url') ?? 'http://localhost:3001' }
+    catch { return 'http://localhost:3001' }
+  })(),
+  setServerUrl: (url) => {
+    try { localStorage.setItem('troubadour-server-url', url) } catch {}
+    set({ serverUrl: url })
+  },
+
   // Theme
   activeTheme: localStorage.getItem('troubadour-theme') ?? 'darkfantasy',
   setTheme: (name) => {
@@ -243,12 +269,12 @@ export const useAppStore = create((set, get) => ({
   // ── Scenarios (playlists) ──────────────────────────────────
   playlists: [],
   fetchPlaylists: async () => {
-    const res = await fetch('/api/playlists')
+    const res = await api('/api/playlists')
     if (res.ok) set({ playlists: await res.json() })
   },
 
   createPlaylist: async ({ name, hasIntensities, intensityCount, scenarioType }) => {
-    const res = await fetch('/api/playlists', {
+    const res = await api('/api/playlists', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, has_intensities: hasIntensities, intensity_count: intensityCount, scenario_type: scenarioType ?? 'scene' }),
@@ -260,7 +286,7 @@ export const useAppStore = create((set, get) => ({
   },
 
   updatePlaylist: async (id, fields) => {
-    const res = await fetch(`/api/playlists/${id}`, {
+    const res = await api(`/api/playlists/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(fields),
@@ -278,7 +304,7 @@ export const useAppStore = create((set, get) => ({
       form.append('file', file)
       form.append('blur', String(blur))
       form.append('darkness', String(darkness))
-      const res = await fetch('/api/images/upload', { method: 'POST', body: form })
+      const res = await api('/api/images/upload', { method: 'POST', body: form })
       if (!res.ok) return null
       const { filename, original } = await res.json()
       return { filename, original }
@@ -288,7 +314,7 @@ export const useAppStore = create((set, get) => ({
   },
 
   reprocessBackground: async (playlistId, blur, darkness) => {
-    const res = await fetch('/api/images/reprocess', {
+    const res = await api('/api/images/reprocess', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ playlistId, blur, darkness }),
@@ -307,7 +333,7 @@ export const useAppStore = create((set, get) => ({
       const remaining = s.playlists.filter((p) => p.id !== id)
       set({ selectedScenarioId: remaining[0]?.id ?? null })
     }
-    await fetch(`/api/playlists/${id}`, { method: 'DELETE' })
+    await api(`/api/playlists/${id}`, { method: 'DELETE' })
     set((s) => ({ playlists: s.playlists.filter((p) => p.id !== id) }))
   },
 
@@ -466,7 +492,7 @@ export const useAppStore = create((set, get) => ({
     })
     const fadeDuration = get().fadeDuration
     setTimeout(() => set({ isTransitioning: false }), fadeDuration + 200)
-    const url = `/tracks/${track.audio_assets.storage_path}`
+    const url = getTrackUrl(track.audio_assets.storage_path)
     audioEngine.playTrack(url, track.id, () => {
       const s = get()
       if (!s.isPlaying) return
@@ -479,7 +505,7 @@ export const useAppStore = create((set, get) => ({
   libraryPreview: { assetId: null, isPlaying: false },
 
   playLibraryPreview: (asset) => {
-    const url = `/tracks/${asset.storage_path}`
+    const url = getTrackUrl(asset.storage_path)
     set({ libraryPreview: { assetId: asset.id, isPlaying: true } })
     previewEngine.play(url, () => set({ libraryPreview: { assetId: null, isPlaying: false } }))
   },
@@ -502,7 +528,7 @@ export const useAppStore = create((set, get) => ({
 
   // ── Tags ───────────────────────────────────────────────────
   addTagToAsset: async (assetId, tag) => {
-    const res = await fetch(`/api/tags/asset/${assetId}`, {
+    const res = await api(`/api/tags/asset/${assetId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tag }),
@@ -513,7 +539,7 @@ export const useAppStore = create((set, get) => ({
   },
 
   removeTagFromAsset: async (assetId, tag) => {
-    const res = await fetch(`/api/tags/asset/${assetId}/${encodeURIComponent(tag)}`, { method: 'DELETE' })
+    const res = await api(`/api/tags/asset/${assetId}/${encodeURIComponent(tag)}`, { method: 'DELETE' })
     if (!res.ok) return
     const tags = await res.json()
     set((s) => ({ audioAssets: s.audioAssets.map((a) => a.id === assetId ? { ...a, tags } : a) }))
@@ -522,16 +548,16 @@ export const useAppStore = create((set, get) => ({
   // ── Audio Assets ───────────────────────────────────────────
   audioAssets: [],
   fetchAudioAssets: async () => {
-    const res = await fetch('/api/assets')
+    const res = await api('/api/assets')
     if (res.ok) set({ audioAssets: await res.json() })
   },
 
   openLibraryFolder: async () => {
-    await fetch('/api/assets/open-folder', { method: 'POST' })
+    await api('/api/assets/open-folder', { method: 'POST' })
   },
 
   scanLibraryFolder: async () => {
-    const res = await fetch('/api/assets/scan', { method: 'POST' })
+    const res = await api('/api/assets/scan', { method: 'POST' })
     if (!res.ok) return 0
     const { added, assets } = await res.json()
     set({ audioAssets: assets })
@@ -546,7 +572,7 @@ export const useAppStore = create((set, get) => ({
     form.append('file', file)
     form.append('file_hash', hash)
 
-    const res = await fetch('/api/assets/upload', { method: 'POST', body: form })
+    const res = await api('/api/assets/upload', { method: 'POST', body: form })
     if (!res.ok) { console.error('Upload failed'); return null }
     const asset = await res.json()
 
@@ -558,7 +584,7 @@ export const useAppStore = create((set, get) => ({
   },
 
   addTrackToPlaylist: async (playlistId, assetId, intensityLevel) => {
-    const res = await fetch(`/api/playlists/${playlistId}/tracks`, {
+    const res = await api(`/api/playlists/${playlistId}/tracks`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ asset_id: assetId, intensity_level: intensityLevel }),
@@ -573,7 +599,7 @@ export const useAppStore = create((set, get) => ({
   },
 
   removeTrackFromPlaylist: async (trackId, playlistId) => {
-    await fetch(`/api/playlists/tracks/${trackId}`, { method: 'DELETE' })
+    await api(`/api/playlists/tracks/${trackId}`, { method: 'DELETE' })
     set((s) => ({
       playlists: s.playlists.map((p) =>
         p.id === playlistId
@@ -586,12 +612,12 @@ export const useAppStore = create((set, get) => ({
   // ── SFX ───────────────────────────────────────────────────
   sfxPanels: [],
   fetchSfxPanels: async () => {
-    const res = await fetch('/api/sfx/panels')
+    const res = await api('/api/sfx/panels')
     if (res.ok) set({ sfxPanels: await res.json() })
   },
 
   createSfxPanel: async (panelType, name) => {
-    const res = await fetch('/api/sfx/panels', {
+    const res = await api('/api/sfx/panels', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ panel_type: panelType, name }),
@@ -602,18 +628,18 @@ export const useAppStore = create((set, get) => ({
   },
 
   deleteSfxPanel: async (id) => {
-    await fetch(`/api/sfx/panels/${id}`, { method: 'DELETE' })
+    await api(`/api/sfx/panels/${id}`, { method: 'DELETE' })
     set((s) => ({ sfxPanels: s.sfxPanels.filter((p) => p.id !== id) }))
   },
 
   sfxButtons: [],
   fetchSfxButtons: async () => {
-    const res = await fetch('/api/sfx/buttons')
+    const res = await api('/api/sfx/buttons')
     if (res.ok) set({ sfxButtons: await res.json() })
   },
 
   createSfxButton: async ({ panelId, name, color, assetIds }) => {
-    const res = await fetch('/api/sfx/buttons', {
+    const res = await api('/api/sfx/buttons', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ panel_id: panelId, name, color, asset_ids: assetIds }),
@@ -625,7 +651,7 @@ export const useAppStore = create((set, get) => ({
   },
 
   duplicateSfxButton: async (buttonId, targetPanelId, newName) => {
-    const res = await fetch(`/api/sfx/buttons/${buttonId}/duplicate`, {
+    const res = await api(`/api/sfx/buttons/${buttonId}/duplicate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ target_panel_id: targetPanelId, new_name: newName }),
@@ -636,7 +662,7 @@ export const useAppStore = create((set, get) => ({
   },
 
   deleteSfxButton: async (id) => {
-    await fetch(`/api/sfx/buttons/${id}`, { method: 'DELETE' })
+    await api(`/api/sfx/buttons/${id}`, { method: 'DELETE' })
     set((s) => ({
       sfxButtons: s.sfxButtons.filter((b) => b.id !== id),
       sfxPanels: s.sfxPanels.map((p) => ({
@@ -654,7 +680,7 @@ export const useAppStore = create((set, get) => ({
   },
 
   addAssetToSfxButton: async (buttonId, assetId) => {
-    const res = await fetch(`/api/sfx/buttons/${buttonId}/files`, {
+    const res = await api(`/api/sfx/buttons/${buttonId}/files`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ asset_id: assetId }),

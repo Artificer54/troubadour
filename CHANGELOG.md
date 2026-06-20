@@ -4,6 +4,18 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-19 (session 9)
+
+### Added
+- **Tauri v2 native app scaffold** — added `src-tauri/` with `Cargo.toml`, `build.rs`, `src/main.rs`, and `src/lib.rs`. In production builds the Rust shell spawns the Express server as a child process and kills it cleanly on exit. Desktop dev mode reuses the existing `npm run dev` workflow.
+- **Connection settings tab** — new "Connection" tab in the Settings modal lets users set the server address. Defaults to `http://localhost:3001`; mobile/tablet users enter their PC's local IP (e.g. `http://192.168.1.10:3001`) to use Troubadour as a WiFi remote control.
+
+### Changed
+- **Removed Electron** — deleted `electron/` folder and uninstalled `electron` + `electron-builder` packages. Tauri replaces both for desktop and mobile targets.
+- **`getApiBase()` helper** — all API and asset URL calls in `useAppStore.js` now go through a single `api()` wrapper that prepends the configured server URL when running inside Tauri. In plain browser mode relative URLs are used unchanged (Vite proxy still works).
+- **Express binds to `0.0.0.0`** — server now accepts connections from other devices on the local network, enabling phone/tablet access over WiFi.
+- **`vite.config.js`** — removed Electron-specific `base` override; added Tauri-recommended `clearScreen`, `strictPort`, `envPrefix`, and build target settings.
+
 ## [Unreleased] — 2026-06-19 (session 8)
 
 ### Changed
