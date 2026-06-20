@@ -6,6 +6,9 @@ All notable changes to Troubadour are recorded here.
 
 ## [Unreleased] — 2026-06-19 (session 8)
 
+### Changed
+- **Favicon** — replaced placeholder lute SVG with the custom vinyl-record PNG icon.
+
 ### Added
 - **Library sidebar** — "Music Library" button in the scenario sidebar now expands the left sidebar (from ~240px to ~420px) into a full library browser, keeping the scenario control panel always visible. Includes seekable preview player, search, tag filters, draggable tracks, and an arrow button to add a track to the current scenario at a chosen intensity.
 - **Drag-and-drop from library to scenario** — tracks in the library sidebar can be dragged directly onto the scenario playlist area; the track is added to the currently-viewed intensity. Drop zone highlights gold when a drag is active.
