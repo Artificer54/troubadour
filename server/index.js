@@ -18,6 +18,9 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
+// Health check for network status indicator
+app.get('/api/health', (_req, res) => res.json({ ok: true, ts: Date.now() }))
+
 // API routes
 app.use('/api/assets', assetsRouter)
 app.use('/api/playlists', playlistsRouter)

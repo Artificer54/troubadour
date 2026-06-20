@@ -10,7 +10,10 @@
     "start": "node server/index.js",
     "preview": "vite preview",
     "tauri": "tauri",
-    "tauri:dev": "concurrently --kill-others-on-fail -n servers,tauri \"npm run dev\" \"wait-on http://localhost:5173 http://localhost:3001/api/playlists && tauri dev\""
+    "tauri:dev": "concurrently --kill-others-on-fail -n servers,tauri \"npm run dev\" \"wait-on http://localhost:5173 http://localhost:3001/api/playlists && tauri dev\"",
+    "tauri:prebuild": "node scripts/prepare-sidecar.js",
+    "tauri:build": "npm run tauri:prebuild && tauri build",
+    "tauri:portable": "node scripts/assemble-portable.js"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
@@ -30,9 +33,11 @@
     "@tauri-apps/cli": "^2",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
+    "@vercel/ncc": "^0.44.0",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.20",
     "concurrently": "^10.0.3",
+    "pkg": "^5.8.1",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.13",
     "vite": "^5.4.8",

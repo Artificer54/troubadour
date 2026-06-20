@@ -7,6 +7,7 @@ import LibrarySidebar from './components/library/LibrarySidebar'
 import SfxMatrix from './components/sfx/SfxMatrix'
 import SettingsModal from './components/ui/SettingsModal'
 import SplashScreen from './components/ui/SplashScreen'
+import NetworkStatusIcon from './components/ui/NetworkStatusIcon'
 
 const MOBILE_TABS = [
   { key: 'scenarios', label: 'Scenarios', icon: Music },
@@ -77,13 +78,16 @@ export default function App() {
               <h1 className="font-fantasy text-gold text-lg tracking-widest">TROUBADOUR</h1>
               <span className="hidden sm:block text-[10px] text-gray-600 uppercase tracking-widest">TTRPG Audio</span>
             </div>
-            <button
-              onClick={() => setShowSettings(true)}
-              title="Settings"
-              className="p-1.5 text-gray-500 hover:text-gold transition-colors rounded-md hover:bg-gold/10"
-            >
-              <Settings size={15} />
-            </button>
+            <div className="flex items-center gap-1">
+              <NetworkStatusIcon />
+              <button
+                onClick={() => setShowSettings(true)}
+                title="Settings"
+                className="p-1.5 text-gray-500 hover:text-gold transition-colors rounded-md hover:bg-gold/10"
+              >
+                <Settings size={15} />
+              </button>
+            </div>
           </header>
 
           {/* Error banner */}

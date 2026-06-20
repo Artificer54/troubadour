@@ -4,6 +4,15 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-20 (session 12)
+
+### Added
+- **Network status icon** — WiFi icon with colored dot (green/amber/red) in the app header. Polls `/api/health` every 10 seconds. Clicking opens a popover showing the current server URL, connection status, step-by-step LAN WiFi setup instructions, and Tailscale setup instructions for cross-network sync.
+- **`GET /api/health` endpoint** — lightweight health-check route returning `{ ok: true, ts }` used by the network status indicator.
+- **Bundled Node.js sidecar** — `scripts/prepare-sidecar.js` copies the current `node.exe` into `src-tauri/binaries/` before a production build, so the shipped `.exe` is self-contained (no Node.js installation required on end-user machines).
+- **`npm run tauri:prebuild` / `npm run tauri:build` scripts** — `tauri:build` automates copying node.exe then invoking `tauri build`.
+- **`src-tauri/binaries/` and `src-tauri/target/` added to `.gitignore`** — prevents large build artifacts and the 50 MB node binary from being committed.
+
 ## [Unreleased] — 2026-06-20 (session 11)
 
 ### Fixed
