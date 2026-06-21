@@ -6,7 +6,11 @@ All notable changes to Troubadour are recorded here.
 
 ## [Unreleased] — 2026-06-21 (session 14)
 
+### Added
+- **File security rules in CLAUDE.md** — explicit pre-commit checklist to prevent secrets, personal data, and binaries from being committed to git.
+
 ### Changed
+- **`.gitignore` hardened** — added `server-bundle/`, `*.key`, `*.pem`, `*.p12`, `*.pfx`, and all `.env` variants (`.env.production`, `.env.*.local`) to prevent accidental exposure of secrets or build artifacts.
 - **Vite upgraded from v5 to v6.4.3** — fixes a moderate esbuild vulnerability (GHSA-67mh-4wv8-2f99) that allowed arbitrary websites to read dev server responses. Production builds were never affected; this only impacted `npm run dev`.
 - **`pkg` removed** — was unused (replaced by `@vercel/ncc` for server bundling) and had an unfixable local privilege escalation vulnerability (GHSA-22r3-9w55-cj54).
 

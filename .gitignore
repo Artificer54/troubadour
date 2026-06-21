@@ -8,9 +8,16 @@ src-tauri/gen/android/.gradle/
 src-tauri/gen/android/local.properties
 .env
 .env.local
+.env.production
+.env.*.local
 troubador.db
 troubador.db-shm
 troubador.db-wal
 images/
 tracks/
 releases/
+server-bundle/
+*.key
+*.pem
+*.p12
+*.pfx
