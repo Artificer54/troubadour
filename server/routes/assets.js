@@ -1,17 +1,14 @@
 import { Router } from 'express'
 import multer from 'multer'
-import { join, dirname, extname } from 'path'
-import { fileURLToPath } from 'url'
+import { join, extname } from 'path'
 import { unlink, readdir, stat, mkdir, writeFile } from 'fs/promises'
 import { randomUUID } from 'crypto'
 import { exec } from 'child_process'
+import { existsSync } from 'fs'
 import db from '../db.js'
+import { TRACKS_DIR, COVERS_DIR } from '../paths.js'
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
-const TRACKS_DIR = join(__dirname, '..', '..', 'tracks')
-const COVERS_DIR = join(__dirname, '..', '..', 'images', 'covers')
-
-// Ensure covers directory exists
+mkdir(TRACKS_DIR, { recursive: true }).catch(() => {})
 mkdir(COVERS_DIR, { recursive: true }).catch(() => {})
 
 async function extractMetadata(filePath, fileHash) {
@@ -34,6 +31,12 @@ async function extractMetadata(filePath, fileHash) {
   }
 }
 
+function resolveAssetPath(asset) {
+  if (!asset.library_id) return join(TRACKS_DIR, asset.storage_path)
+  const lib = db.prepare(`SELECT path FROM music_libraries WHERE id = ?`).get(asset.library_id)
+  return lib ? join(lib.path, asset.storage_path) : null
+}
+
 const storage = multer.diskStorage({
   destination: TRACKS_DIR,
   filename: (_req, file, cb) => cb(null, randomUUID() + extname(file.originalname)),
@@ -53,17 +56,29 @@ router.get('/', (_req, res) => {
   res.json(rows.map(r => ({ ...r, tags: tagMap[r.id] ?? [] })))
 })
 
+// Stream any asset by ID — handles both default tracks and library files.
+// res.sendFile handles Range headers natively, enabling audio seeking.
+router.get('/stream/:id', (req, res) => {
+  const asset = db.prepare(`SELECT * FROM audio_assets WHERE id = ?`).get(req.params.id)
+  if (!asset) return res.status(404).json({ error: 'Not found' })
+
+  const filePath = resolveAssetPath(asset)
+  if (!filePath || !existsSync(filePath)) return res.status(404).json({ error: 'File not found on disk' })
+
+  res.sendFile(filePath, (err) => {
+    if (err && !res.headersSent) res.status(500).json({ error: 'Failed to stream file' })
+  })
+})
+
 router.post('/upload', upload.single('file'), async (req, res) => {
   const { file, body } = req
   if (!file) return res.status(400).json({ error: 'No file provided' })
 
   const { file_hash, duration_sec } = body
 
-  // Dedup by hash
   if (file_hash) {
     const existing = db.prepare(`SELECT * FROM audio_assets WHERE file_hash = ?`).get(file_hash)
     if (existing) {
-      // Remove the just-uploaded duplicate
       unlink(file.path).catch(() => {})
       return res.json(existing)
     }
@@ -87,13 +102,16 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 
 const AUDIO_EXTS = new Set(['.mp3', '.wav', '.ogg', '.flac', '.aac', '.m4a', '.opus', '.weba'])
 
+// Scan the default tracks directory for unregistered files
 router.post('/scan', async (_req, res) => {
   try {
     const files = await readdir(TRACKS_DIR)
-    const existing = new Set(db.prepare(`SELECT storage_path FROM audio_assets`).all().map((r) => r.storage_path))
+    const existingPaths = new Set(
+      db.prepare(`SELECT storage_path FROM audio_assets WHERE library_id IS NULL`).all().map(r => r.storage_path)
+    )
     let added = 0
     for (const filename of files) {
-      if (existing.has(filename)) continue
+      if (existingPaths.has(filename)) continue
       const ext = extname(filename).toLowerCase()
       if (!AUDIO_EXTS.has(ext)) continue
       const filePath = join(TRACKS_DIR, filename)
@@ -129,12 +147,21 @@ router.post('/open-folder', (_req, res) => {
   res.json({ ok: true, path: TRACKS_DIR })
 })
 
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
   const asset = db.prepare(`SELECT * FROM audio_assets WHERE id = ?`).get(req.params.id)
   if (!asset) return res.status(404).json({ error: 'Not found' })
 
   db.prepare(`DELETE FROM audio_assets WHERE id = ?`).run(req.params.id)
-  unlink(join(TRACKS_DIR, asset.storage_path)).catch(() => {})
+
+  // Only delete the audio file for uploaded tracks, not for library files (those live in the user's folders)
+  if (!asset.library_id) {
+    unlink(join(TRACKS_DIR, asset.storage_path)).catch(() => {})
+  }
+  // Always clean up extracted cover art from our covers dir
+  if (asset.cover_art_path) {
+    unlink(join(COVERS_DIR, asset.cover_art_path)).catch(() => {})
+  }
+
   res.json({ ok: true })
 })
 

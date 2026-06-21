@@ -47,11 +47,14 @@ export default function App() {
     applyIntensityColors(state.intensityColors)
   }, [activeTheme])
 
+  const fetchMusicLibraries = useAppStore((s) => s.fetchMusicLibraries)
+
   useEffect(() => {
     fetchPlaylists()
     fetchAudioAssets()
     fetchSfxPanels()
     fetchSfxButtons()
+    fetchMusicLibraries()
   }, [])
 
   return (

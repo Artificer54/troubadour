@@ -1,9 +1,8 @@
 import Database from 'better-sqlite3'
-import { join, dirname } from 'path'
-import { fileURLToPath } from 'url'
+import { join } from 'path'
+import { DATA_ROOT } from './paths.js'
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
-const DB_PATH = join(__dirname, '..', 'troubador.db')
+const DB_PATH = join(DATA_ROOT, 'troubador.db')
 
 const db = new Database(DB_PATH)
 db.pragma('journal_mode = WAL')
@@ -65,19 +64,15 @@ db.exec(`
     created_at TEXT DEFAULT (datetime('now')),
     UNIQUE (button_id, asset_id)
   );
-`)
 
-// Migrations for columns added after initial schema
-try { db.exec(`ALTER TABLE playlists ADD COLUMN background_image TEXT`) } catch {}
-try { db.exec(`ALTER TABLE playlists ADD COLUMN background_image_original TEXT`) } catch {}
-try { db.exec(`ALTER TABLE playlists ADD COLUMN bg_blur INTEGER DEFAULT 12`) } catch {}
-try { db.exec(`ALTER TABLE playlists ADD COLUMN bg_darkness INTEGER DEFAULT 55`) } catch {}
-try { db.exec(`ALTER TABLE playlists ADD COLUMN scenario_type TEXT NOT NULL DEFAULT 'scene'`) } catch {}
-try { db.exec(`ALTER TABLE audio_assets ADD COLUMN artist TEXT`) } catch {}
-try { db.exec(`ALTER TABLE audio_assets ADD COLUMN album TEXT`) } catch {}
-try { db.exec(`ALTER TABLE audio_assets ADD COLUMN cover_art_path TEXT`) } catch {}
+  CREATE TABLE IF NOT EXISTS music_libraries (
+    id         TEXT PRIMARY KEY,
+    name       TEXT NOT NULL,
+    path       TEXT NOT NULL UNIQUE,
+    enabled    INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
 
-db.exec(`
   CREATE TABLE IF NOT EXISTS asset_tags (
     id       TEXT PRIMARY KEY,
     asset_id TEXT NOT NULL REFERENCES audio_assets(id) ON DELETE CASCADE,
@@ -85,5 +80,26 @@ db.exec(`
     UNIQUE(asset_id, tag)
   );
 `)
+
+// Migrations — log unexpected failures but swallow idempotent "duplicate column" errors
+function migrate(sql, label) {
+  try {
+    db.exec(sql)
+  } catch (e) {
+    if (!e.message.includes('duplicate column name')) {
+      console.warn(`Migration "${label}" skipped:`, e.message)
+    }
+  }
+}
+
+migrate(`ALTER TABLE playlists ADD COLUMN background_image TEXT`, 'playlists.background_image')
+migrate(`ALTER TABLE playlists ADD COLUMN background_image_original TEXT`, 'playlists.background_image_original')
+migrate(`ALTER TABLE playlists ADD COLUMN bg_blur INTEGER DEFAULT 12`, 'playlists.bg_blur')
+migrate(`ALTER TABLE playlists ADD COLUMN bg_darkness INTEGER DEFAULT 55`, 'playlists.bg_darkness')
+migrate(`ALTER TABLE playlists ADD COLUMN scenario_type TEXT NOT NULL DEFAULT 'scene'`, 'playlists.scenario_type')
+migrate(`ALTER TABLE audio_assets ADD COLUMN artist TEXT`, 'audio_assets.artist')
+migrate(`ALTER TABLE audio_assets ADD COLUMN album TEXT`, 'audio_assets.album')
+migrate(`ALTER TABLE audio_assets ADD COLUMN cover_art_path TEXT`, 'audio_assets.cover_art_path')
+migrate(`ALTER TABLE audio_assets ADD COLUMN library_id TEXT REFERENCES music_libraries(id) ON DELETE SET NULL`, 'audio_assets.library_id')
 
 export default db

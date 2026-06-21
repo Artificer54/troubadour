@@ -8,6 +8,7 @@ import playlistsRouter from './routes/playlists.js'
 import sfxRouter from './routes/sfx.js'
 import imagesRouter from './routes/images.js'
 import tagsRouter from './routes/tags.js'
+import librariesRouter from './routes/libraries.js'
 import { DATA_ROOT } from './paths.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -27,8 +28,9 @@ app.use('/api/playlists', playlistsRouter)
 app.use('/api/sfx', sfxRouter)
 app.use('/api/images', imagesRouter)
 app.use('/api/tags', tagsRouter)
+app.use('/api/libraries', librariesRouter)
 
-// Serve uploaded files
+// Serve uploaded files (default tracks dir only; library files are streamed via /api/assets/stream/:id)
 app.use('/tracks', express.static(join(DATA_ROOT, 'tracks')))
 app.use('/images', express.static(join(DATA_ROOT, 'images')))
 
@@ -38,6 +40,12 @@ if (existsSync(distDir)) {
   app.use(express.static(distDir))
   app.use((_req, res) => res.sendFile(join(distDir, 'index.html')))
 }
+
+// Global error handler — Express 5 propagates async throws here automatically
+app.use((err, _req, res, _next) => {
+  console.error(err.stack ?? err.message)
+  res.status(err.status ?? 500).json({ error: err.message ?? 'Internal server error' })
+})
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Troubadour server running on http://0.0.0.0:${PORT}`)

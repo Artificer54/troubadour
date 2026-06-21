@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { Wifi, WifiOff, Loader } from 'lucide-react'
+import { storage } from '../../lib/storage'
 
 function getServerUrl() {
   if (typeof window !== 'undefined' && window.__TAURI_INTERNALS__) {
-    try { return localStorage.getItem('troubadour-server-url') ?? 'http://localhost:3001' }
-    catch { return 'http://localhost:3001' }
+    return storage.getStr('server-url', 'http://localhost:3001')
   }
   return 'http://localhost:3001'
 }

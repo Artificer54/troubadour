@@ -4,6 +4,34 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-21 (session 13)
+
+### Added
+- **Multi-library music support** — Users can register any local folder as a music library via Settings → Libraries. Troubadour scans the folder and makes all audio files available without copying them. Remote clients (phone/tablet) stream audio from all libraries automatically via the server.
+- `music_libraries` DB table — stores registered library paths, names, and enabled state.
+- `library_id` column on `audio_assets` — links scanned library files back to their source library.
+- `GET/POST/PUT/DELETE /api/libraries` and `POST /api/libraries/:id/scan` — full CRUD + per-library rescan endpoint.
+- `GET /api/assets/stream/:id` — streams any audio asset (default or library) by ID with full HTTP Range support for seeking; used automatically for library files so arbitrary folder paths never need to be statically mounted.
+- **LibraryManager component** — UI panel inside Settings → Libraries showing the built-in upload folder, registered external libraries (with track count, enable/disable toggle, scan button, remove button), and an add-library form.
+- **`src/lib/storage.js`** — centralized localStorage utility with a consistent `troubadour-` prefix, replacing 30+ scattered inline `localStorage` calls.
+- **`src/store/theme.js`** — extracted all theme constants, `applyTheme`, `applyIntensityColors`, and color helpers into a standalone module to eliminate circular imports.
+- **`src/store/api.js`** — shared `api()` fetch wrapper (was duplicated in store).
+
+### Changed
+- **Store split into slices** — `useAppStore.js` (was 692 lines) refactored into six focused slice files: `settingsSlice`, `audioSlice`, `playlistSlice`, `assetSlice`, `sfxSlice`, `librarySlice`. All composed back into a single `useAppStore` so no component imports changed.
+- **`getTrackUrl` now takes the full asset object** — returns `/api/assets/stream/:id` for library files (streamed) and `/tracks/:filename` for uploaded files (static). This is a transparent internal change; all audio playback and SFX continue to work unchanged.
+- `server/db.js` migrations now log unexpected failures instead of silently swallowing all errors.
+- `releases/` added to `.gitignore` — build artifacts no longer tracked.
+- `NetworkStatusIcon` now uses the `storage` utility instead of a raw `localStorage` call.
+
+### Fixed
+- **Orphaned cover art** — deleting an audio asset now also removes its extracted album art from `images/covers/`.
+- **Library-file safety** — deleting an asset that came from a user's library removes only the DB record; the original file on disk is untouched.
+- **Image input validation** — blur (0–30) and darkness (0–90) are now clamped server-side before being passed to sharp.
+- **Global Express error handler** — unhandled async route errors are now caught and returned as `{ error }` JSON instead of crashing or hanging the request.
+- Scan endpoint now uses `WHERE library_id IS NULL` so it doesn't re-scan library files when scanning the default tracks folder.
+- `library_id` propagated through all nested `audio_assets` JOIN queries (playlists, SFX routes) so the frontend always has enough context to build the correct stream URL.
+
 ## [Unreleased] — 2026-06-20 (session 12)
 
 ### Added

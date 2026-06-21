@@ -1,16 +1,14 @@
 import { Router } from 'express'
 import multer from 'multer'
 import sharp from 'sharp'
-import { join, dirname, extname } from 'path'
-import { fileURLToPath } from 'url'
+import { join, extname } from 'path'
 import { randomUUID } from 'crypto'
 import { mkdirSync } from 'fs'
 import { unlink, copyFile } from 'fs/promises'
 import { existsSync } from 'fs'
 import db from '../db.js'
+import { IMAGES_DIR } from '../paths.js'
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
-const IMAGES_DIR = join(__dirname, '..', '..', 'images')
 mkdirSync(IMAGES_DIR, { recursive: true })
 
 const storage = multer.diskStorage({
@@ -40,8 +38,8 @@ const router = Router()
 router.post('/upload', upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No image provided' })
 
-  const blur     = parseInt(req.body.blur     ?? '12')
-  const darkness = parseInt(req.body.darkness ?? '55')
+  const blur     = Math.max(0, Math.min(30, parseInt(req.body.blur     ?? '12') || 0))
+  const darkness = Math.max(0, Math.min(90, parseInt(req.body.darkness ?? '55') || 0))
   const origName = req.file.filename
   const bgName   = origName.replace('_orig', '_bg').replace(/\.[^.]+$/, '.jpg')
   const origPath = join(IMAGES_DIR, origName)

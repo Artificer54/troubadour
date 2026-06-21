@@ -8,7 +8,7 @@ function getPanelsWithNested() {
   const panels = db.prepare(`SELECT * FROM sfx_panels ORDER BY position`).all()
   const buttons = db.prepare(`SELECT * FROM sfx_buttons ORDER BY position`).all()
   const files = db.prepare(`
-    SELECT sbf.*, a.id as a_id, a.name as a_name, a.storage_path, a.file_hash, a.mime_type, a.duration_sec, a.file_size
+    SELECT sbf.*, a.id as a_id, a.name as a_name, a.storage_path, a.file_hash, a.mime_type, a.duration_sec, a.file_size, a.library_id as a_library_id
     FROM sfx_button_files sbf JOIN audio_assets a ON a.id = sbf.asset_id
   `).all()
 
@@ -22,7 +22,7 @@ function getPanelsWithNested() {
           .filter(f => f.button_id === b.id)
           .map(f => ({
             id: f.id, button_id: f.button_id, asset_id: f.asset_id, created_at: f.created_at,
-            audio_assets: { id: f.a_id, name: f.a_name, storage_path: f.storage_path, file_hash: f.file_hash, mime_type: f.mime_type, duration_sec: f.duration_sec, file_size: f.file_size },
+            audio_assets: { id: f.a_id, name: f.a_name, storage_path: f.storage_path, file_hash: f.file_hash, mime_type: f.mime_type, duration_sec: f.duration_sec, file_size: f.file_size, library_id: f.a_library_id ?? null },
           })),
       })),
   }))
@@ -31,7 +31,7 @@ function getPanelsWithNested() {
 function getButtonsWithNested() {
   const buttons = db.prepare(`SELECT b.*, p.id as p_id, p.name as p_name, p.panel_type FROM sfx_buttons b LEFT JOIN sfx_panels p ON p.id = b.panel_id ORDER BY b.name`).all()
   const files = db.prepare(`
-    SELECT sbf.*, a.id as a_id, a.name as a_name, a.storage_path, a.file_hash, a.mime_type, a.duration_sec, a.file_size
+    SELECT sbf.*, a.id as a_id, a.name as a_name, a.storage_path, a.file_hash, a.mime_type, a.duration_sec, a.file_size, a.library_id as a_library_id
     FROM sfx_button_files sbf JOIN audio_assets a ON a.id = sbf.asset_id
   `).all()
 
@@ -42,7 +42,7 @@ function getButtonsWithNested() {
       .filter(f => f.button_id === b.id)
       .map(f => ({
         id: f.id, button_id: f.button_id, asset_id: f.asset_id, created_at: f.created_at,
-        audio_assets: { id: f.a_id, name: f.a_name, storage_path: f.storage_path, file_hash: f.file_hash, mime_type: f.mime_type, duration_sec: f.duration_sec, file_size: f.file_size },
+        audio_assets: { id: f.a_id, name: f.a_name, storage_path: f.storage_path, file_hash: f.file_hash, mime_type: f.mime_type, duration_sec: f.duration_sec, file_size: f.file_size, library_id: f.a_library_id ?? null },
       })),
   }))
 }

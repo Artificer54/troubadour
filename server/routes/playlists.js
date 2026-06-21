@@ -7,7 +7,7 @@ const router = Router()
 router.get('/', (_req, res) => {
   const playlists = db.prepare(`SELECT * FROM playlists ORDER BY created_at DESC`).all()
   const tracks = db.prepare(`
-    SELECT pt.*, a.id as a_id, a.name as a_name, a.storage_path, a.file_hash, a.mime_type, a.duration_sec, a.file_size, a.artist, a.album, a.cover_art_path
+    SELECT pt.*, a.id as a_id, a.name as a_name, a.storage_path, a.file_hash, a.mime_type, a.duration_sec, a.file_size, a.artist, a.album, a.cover_art_path, a.library_id as a_library_id
     FROM playlist_tracks pt
     JOIN audio_assets a ON a.id = pt.asset_id
   `).all()
@@ -35,6 +35,7 @@ router.get('/', (_req, res) => {
           artist: t.artist,
           album: t.album,
           cover_art_path: t.cover_art_path,
+          library_id: t.a_library_id ?? null,
         },
       })),
   }))
@@ -100,7 +101,7 @@ router.post('/:id/tracks', (req, res) => {
   `).run(id, req.params.id, asset_id, intensity_level ?? 0, pos.c)
 
   const row = db.prepare(`
-    SELECT pt.*, a.id as a_id, a.name as a_name, a.storage_path, a.file_hash, a.mime_type, a.duration_sec, a.file_size, a.artist, a.album, a.cover_art_path
+    SELECT pt.*, a.id as a_id, a.name as a_name, a.storage_path, a.file_hash, a.mime_type, a.duration_sec, a.file_size, a.artist, a.album, a.cover_art_path, a.library_id as a_library_id
     FROM playlist_tracks pt JOIN audio_assets a ON a.id = pt.asset_id WHERE pt.id = ?
   `).get(id)
 
@@ -116,6 +117,7 @@ router.post('/:id/tracks', (req, res) => {
       file_hash: row.file_hash, mime_type: row.mime_type,
       duration_sec: row.duration_sec, file_size: row.file_size,
       artist: row.artist, album: row.album, cover_art_path: row.cover_art_path,
+      library_id: row.a_library_id ?? null,
     },
   })
 })

@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Check, Palette, Sliders, RotateCcw, Plus, Trash2, Pencil, X, Wifi } from 'lucide-react'
+import { Check, Palette, Sliders, RotateCcw, Plus, Trash2, Pencil, X, Wifi, Library } from 'lucide-react'
 import { useAppStore, PRESET_THEMES, DEFAULT_CUSTOM_COLORS } from '../../store/useAppStore'
 import Modal from './Modal'
+import LibraryManager from './LibraryManager'
 
 const INTENSITY_LABELS = ['Calm', 'Tense', 'Intense', 'Frantic', 'Legendary']
 
@@ -77,6 +78,7 @@ export default function SettingsModal({ onClose }) {
         {[
           { key: 'theme',      label: 'Theme',            icon: Palette },
           { key: 'intensity',  label: 'Intensity Colors', icon: Sliders },
+          { key: 'libraries',  label: 'Libraries',        icon: Library },
           { key: 'connection', label: 'Connection',       icon: Wifi },
         ].map(({ key, label, icon: Icon }) => (
           <button
@@ -293,6 +295,9 @@ export default function SettingsModal({ onClose }) {
           </p>
         </div>
       )}
+
+      {/* ── Libraries tab ─────────────────────────────────────── */}
+      {tab === 'libraries' && <LibraryManager />}
 
       {/* ── Connection tab ─────────────────────────────────────── */}
       {tab === 'connection' && (
