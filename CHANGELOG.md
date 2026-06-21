@@ -4,6 +4,24 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-21 (session 16)
+
+### Added
+- **Auto-update engine** (`server/updater.js`) — polls GitHub every 15 minutes (configurable via `UPDATE_POLL_MINUTES` env var) and compares local git SHA against the remote `main` branch. Exposes `getUpdateState()` and `applyUpdate()` (git pull → npm install → npm build → process.exit so PM2 auto-restarts).
+- **Update API routes** (`server/routes/update.js`) — `GET /api/update/status` returns current/remote SHA and update availability; `POST /api/update/apply` triggers the update sequence.
+- **Update banner** (`src/components/ui/UpdateBanner.jsx`) — subtle gold pill at the top of the UI that appears when an update is available, with an **Update Now** button and dismissal option. Polls status every 5 minutes.
+- **PM2 ecosystem config** (`ecosystem.config.cjs`) — declarative PM2 process config using `.cjs` extension for compatibility with `"type": "module"` package.json.
+- **`UPDATE_POLL_MINUTES` env var** — added to `.env.example` with documentation.
+
+### Changed
+- **`server/index.js`** — imports and starts the update poller on server startup, registers `/api/update` routes.
+- **`src/App.jsx`** — renders `<UpdateBanner />` between the top bar and error banner.
+- **`SETUP.md` rewritten** — novice-friendly, step-by-step numbered lists, explicit Windows vs Mac/Linux PM2 instructions, Windows startup using `pm2-windows-startup` instead of broken `pm2 startup`, new Auto-Updates section, new Uninstall section, expanded troubleshooting table.
+- **`README.md`** — updated PM2 section to use `ecosystem.config.cjs` and `pm2-windows-startup`, added auto-update description, links to SETUP.md for full deployment detail.
+- **Fixed repo URL casing** — corrected `artificer54/Troubador` → `Artificer54/troubadour` in updater and docs to match actual GitHub remote.
+
+---
+
 ## [Unreleased] — 2026-06-21 (session 15)
 
 ### Removed

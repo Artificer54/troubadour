@@ -8,6 +8,7 @@ import SfxMatrix from './components/sfx/SfxMatrix'
 import SettingsModal from './components/ui/SettingsModal'
 import SplashScreen from './components/ui/SplashScreen'
 import NetworkStatusIcon from './components/ui/NetworkStatusIcon'
+import UpdateBanner from './components/ui/UpdateBanner'
 
 const MOBILE_TABS = [
   { key: 'scenarios', label: 'Scenarios', icon: Music },
@@ -92,6 +93,8 @@ export default function App() {
               </button>
             </div>
           </header>
+
+          <UpdateBanner />
 
           {/* Error banner */}
           {appError && (

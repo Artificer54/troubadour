@@ -51,19 +51,27 @@ The server listens on `http://0.0.0.0:3001` and serves the built frontend. Acces
 
 ```bash
 npm install -g pm2
-pm2 start server/index.js --name troubadour
+pm2 start ecosystem.config.cjs
 pm2 save
-pm2 startup   # follow the printed command to auto-start on reboot
 ```
 
-### Updating
+**Windows only** — register as a startup task:
+```powershell
+npm install -g pm2-windows-startup
+pm2-startup install
+```
 
+**Mac / Linux** — register as a startup service:
 ```bash
-git pull
-npm install
-npm run build
-pm2 restart troubadour
+pm2 startup   # copy and run the printed command, then:
+pm2 save
 ```
+
+### Auto-Updates
+
+Troubadour checks GitHub for new versions every 15 minutes. When an update is available, a banner appears in the app — click **Update Now** and the server updates and restarts itself. No manual commands needed.
+
+See [SETUP.md](SETUP.md) for full deployment instructions, including Windows-specific steps and uninstall.
 
 ---
 
