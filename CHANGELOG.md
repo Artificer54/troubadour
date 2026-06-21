@@ -6,6 +6,10 @@ All notable changes to Troubadour are recorded here.
 
 ## [Unreleased] — 2026-06-21 (session 14)
 
+### Changed
+- **Vite upgraded from v5 to v6.4.3** — fixes a moderate esbuild vulnerability (GHSA-67mh-4wv8-2f99) that allowed arbitrary websites to read dev server responses. Production builds were never affected; this only impacted `npm run dev`.
+- **`pkg` removed** — was unused (replaced by `@vercel/ncc` for server bundling) and had an unfixable local privilege escalation vulnerability (GHSA-22r3-9w55-cj54).
+
 ### Added
 - **`SETUP.md`** — comprehensive self-hosting, Tailscale, Android, and update guide for end users and developers.
 - **Help & Setup tab in Settings** — in-app documentation covering all deployment modes (desktop MSI, self-hosted, Tailscale, Android via browser, updates). Accessible without leaving the app.
