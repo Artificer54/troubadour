@@ -11,6 +11,11 @@ All notable changes to Troubadour are recorded here.
 
 ### Changed
 - **`.gitignore` hardened** — added `server-bundle/`, `*.key`, `*.pem`, `*.p12`, `*.pfx`, and all `.env` variants (`.env.production`, `.env.*.local`) to prevent accidental exposure of secrets or build artifacts.
+
+### Removed
+- **`supabase/schema.sql`** — dead code; Supabase project deleted, app runs entirely on local SQLite.
+- **`.env.example`** — only contained Supabase env vars (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) which are no longer referenced anywhere. App requires no environment variables.
+- **`src-tauri/gen/android/app/src/main/assets/server/`** — stale snapshot copies of server files committed into the Tauri Android gen directory. Were missing `routes/libraries.js` and `routes/tags.js` (added after the snapshot), and the app targets Windows MSI only — no Android build is configured.
 - **Vite upgraded from v5 to v6.4.3** — fixes a moderate esbuild vulnerability (GHSA-67mh-4wv8-2f99) that allowed arbitrary websites to read dev server responses. Production builds were never affected; this only impacted `npm run dev`.
 - **`pkg` removed** — was unused (replaced by `@vercel/ncc` for server bundling) and had an unfixable local privilege escalation vulnerability (GHSA-22r3-9w55-cj54).
 
