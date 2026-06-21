@@ -1,13 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { Wifi, WifiOff, Loader } from 'lucide-react'
-import { storage } from '../../lib/storage'
-
-function getServerUrl() {
-  if (typeof window !== 'undefined' && window.__TAURI_INTERNALS__) {
-    return storage.getStr('server-url', 'http://localhost:3001')
-  }
-  return 'http://localhost:3001'
-}
 
 const STATUS_CONFIG = {
   connected:   { color: '#22c55e', label: 'Connected' },
@@ -16,18 +8,15 @@ const STATUS_CONFIG = {
 }
 
 export default function NetworkStatusIcon() {
-  const [status, setStatus]   = useState('checking')
-  const [open, setOpen]       = useState(false)
-  const [serverUrl, setServerUrl] = useState(getServerUrl)
+  const [status, setStatus] = useState('checking')
+  const [open, setOpen]     = useState(false)
   const popoverRef = useRef(null)
 
   async function checkHealth() {
-    const base = getServerUrl()
-    setServerUrl(base)
     try {
       const controller = new AbortController()
       const timer = setTimeout(() => controller.abort(), 3000)
-      const res = await fetch(`${base}/api/health`, { signal: controller.signal })
+      const res = await fetch('/api/health', { signal: controller.signal })
       clearTimeout(timer)
       setStatus(res.ok ? 'connected' : 'unreachable')
     } catch {
@@ -41,7 +30,6 @@ export default function NetworkStatusIcon() {
     return () => clearInterval(interval)
   }, [])
 
-  // Close popover on outside click
   useEffect(() => {
     if (!open) return
     function handler(e) {
@@ -70,7 +58,6 @@ export default function NetworkStatusIcon() {
 
       {open && (
         <div className="absolute right-0 top-full mt-2 w-80 z-50 rounded-lg border border-border bg-panel shadow-xl text-xs">
-          {/* Status header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <span className="font-semibold text-sm text-gray-200">Network Status</span>
             <span className="flex items-center gap-1.5" style={{ color: cfg.color }}>
@@ -80,44 +67,37 @@ export default function NetworkStatusIcon() {
           </div>
 
           <div className="px-4 py-3 border-b border-border space-y-1">
-            <div className="text-gray-400">Server URL</div>
-            <div className="font-mono text-gray-200 break-all">{serverUrl}</div>
+            <div className="text-gray-400">Server</div>
+            <div className="font-mono text-gray-200 break-all">{window.location.origin}</div>
             <div className="text-gray-500 pt-1">
-              Change this in <span className="text-gold">Settings → Connection</span>
+              Access from other devices using this machine&apos;s IP address and port 3001.
             </div>
           </div>
 
-          {/* LAN WiFi instructions */}
           <div className="px-4 py-3 border-b border-border space-y-2">
             <div className="font-semibold text-gray-300">LAN WiFi (same network)</div>
             <ol className="space-y-1.5 text-gray-400 list-decimal list-inside">
-              <li>On PC: open Troubadour — the server starts automatically</li>
               <li>
                 Find your PC&apos;s local IP:{' '}
                 <span className="font-mono bg-midnight px-1 rounded">ipconfig</span> in CMD
                 → look for <span className="text-gray-300">IPv4 Address</span> under your WiFi adapter
               </li>
               <li>
-                On phone: Settings → Connection → enter{' '}
-                <span className="font-mono text-gray-300">http://192.168.x.x:3001</span>
+                On phone, open{' '}
+                <span className="font-mono text-gray-300">http://192.168.x.x:3001</span>{' '}
+                in a browser
               </li>
             </ol>
           </div>
 
-          {/* Tailscale instructions */}
           <div className="px-4 py-3 space-y-2">
             <div className="font-semibold text-gray-300">Tailscale (works across networks)</div>
             <ol className="space-y-1.5 text-gray-400 list-decimal list-inside">
+              <li>Install Tailscale on PC and phone, sign in to the same account</li>
               <li>
-                Install Tailscale on PC:{' '}
-                <span className="font-mono bg-midnight px-1 rounded">tailscale.com/download</span>
-              </li>
-              <li>Install Tailscale on your Android phone</li>
-              <li>Sign in to the <span className="text-gray-300">same Tailscale account</span> on both devices</li>
-              <li>
-                On phone: Settings → Connection → enter{' '}
+                On phone: open{' '}
                 <span className="font-mono text-gray-300">http://100.x.x.x:3001</span>
-                <span className="block text-gray-500 mt-0.5">(find your PC&apos;s Tailscale IP in the Tailscale app)</span>
+                <span className="block text-gray-500 mt-0.5">(your PC&apos;s Tailscale IP from the Tailscale app)</span>
               </li>
             </ol>
           </div>

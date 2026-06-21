@@ -1,1 +1,0 @@
-{"default":{"identifier":"default","description":"Default capability for Troubadour — grants the main window access to core Tauri APIs.","local":true,"windows":["main"],"permissions":["core:default"]}}

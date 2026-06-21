@@ -1,62 +1,14 @@
 # Troubadour
 
-> **⚠️ Work in Progress** — This app is actively developed and used personally. Features may change, break, or be incomplete. Contributions and feedback are welcome, but treat this as a personal project shared publicly rather than a stable release.
+> **⚠️ Work in Progress** — Actively developed and used personally. Features may change or be incomplete.
 
-A self-hosted audio manager built for Dungeon Masters. Organize ambient music into **Scenarios**, switch between intensity levels on the fly, and trigger sound effects from a customizable button matrix — all running locally with no cloud dependencies.
+A self-hosted audio manager for Dungeon Masters. Organize ambient music into **Scenarios**, switch intensity levels on the fly, and trigger sound effects from a customizable button matrix — all running locally, no cloud required.
 
-![WIP](https://img.shields.io/badge/status-work%20in%20progress-orange) ![React](https://img.shields.io/badge/React-18-blue) ![Vite](https://img.shields.io/badge/Vite-6-purple) ![Express](https://img.shields.io/badge/Express-5-lightgrey) ![SQLite](https://img.shields.io/badge/SQLite-local-orange) ![Tauri](https://img.shields.io/badge/Tauri-2-yellow) ![Tailwind](https://img.shields.io/badge/Tailwind-CSS-teal)
-
----
-
-## Features
-
-- **Scenarios** — Group tracks into named scenes (e.g. "Tavern", "Boss Fight"). Each scenario has five intensity levels: Calm → Tense → Intense → Frantic → Legendary
-- **Adaptive Playback** — Switch intensity levels with a configurable crossfade. A spinning disk visualizer reflects the current intensity
-- **Smart Shuffle** — Tracks cycle through once each before repeating; no awkward early repeats
-- **SFX Matrix** — A grid of one-shot sound effect buttons, organized into panels per scenario
-- **Multi-Library Support** — Point Troubadour at any folder on your PC; it scans and indexes audio files without copying them
-- **Audio Deduplication** — SHA-256 hash check prevents uploading duplicate files
-- **8 Themes** — Dark Fantasy, Arcane, Battlefield, Celestial, Blood Moon, Deep Sea, Sunset, Neon Void — plus fully customizable color presets
-- **Remote Access** — Access from a phone or tablet via local WiFi or Tailscale; no internet required
+![WIP](https://img.shields.io/badge/status-work%20in%20progress-orange) ![React](https://img.shields.io/badge/React-18-blue) ![Vite](https://img.shields.io/badge/Vite-6-purple) ![Express](https://img.shields.io/badge/Express-5-lightgrey) ![SQLite](https://img.shields.io/badge/SQLite-local-orange) ![Tailwind](https://img.shields.io/badge/Tailwind-CSS-teal)
 
 ---
 
-## How to Use It
-
-| Mode | Best for |
-|---|---|
-| **Windows MSI installer** | DMs who want one-click setup on their own PC |
-| **Self-hosted web server** | Running on a home server so any browser on the network can access it |
-| **Browser via Tailscale** | Remote sessions, phone/tablet access across different networks |
-
-See **[SETUP.md](SETUP.md)** for step-by-step instructions for each mode.
-
----
-
-## Tech Stack
-
-| Layer | Tech |
-|---|---|
-| Frontend | React 18, Vite 5 |
-| Styling | Tailwind CSS with CSS-variable theme system |
-| State | Zustand (split into slice files) |
-| Audio | Howler.js |
-| Icons | Lucide React |
-| Backend | Express 5 |
-| Database | SQLite via better-sqlite3 |
-| Desktop | Tauri 2 (Windows MSI) |
-| Server bundling | @vercel/ncc (inlines all JS deps for the Tauri build) |
-
----
-
-## Getting Started (Development)
-
-### Prerequisites
-
-- Node.js 18+
-- Rust + Cargo (only needed for Tauri desktop builds)
-
-### Run locally
+## Quick Start
 
 ```bash
 git clone https://github.com/Artificer54/troubadour.git
@@ -65,75 +17,125 @@ npm install
 npm run dev
 ```
 
-Opens two servers:
-- Express API on `http://localhost:3001`
-- Vite dev server on `http://localhost:5173` (proxies `/api` to Express)
+Open **http://localhost:5173** in your browser.
 
-### Build for production (web server)
+> The `dev` command starts both the Express API (port 3001) and the Vite dev server (port 5173) together.
+
+---
+
+## Features
+
+- **Scenarios** — Group tracks into named scenes (e.g. "Tavern", "Boss Fight"). Each has five intensity levels: Calm → Tense → Intense → Frantic → Legendary
+- **Adaptive Playback** — Switch intensity mid-scene with a configurable crossfade. A spinning disk reflects the current level
+- **Smart Shuffle** — Tracks cycle through once before repeating — no awkward early repeats
+- **SFX Matrix** — Grid of one-shot sound effect buttons, organized per scenario
+- **Multi-Library Support** — Point Troubadour at any folder; it scans and indexes audio without copying files
+- **Audio Deduplication** — SHA-256 check prevents duplicate uploads
+- **8 Themes** — Dark Fantasy, Arcane, Battlefield, Celestial, Blood Moon, Deep Sea, Sunset, Neon Void — plus fully customizable color presets
+- **Remote Access** — Open from a phone or tablet over local WiFi or Tailscale
+
+---
+
+## Production Deployment
+
+Build the app and run it as a persistent server:
 
 ```bash
 npm run build
 npm start
 ```
 
-Serves the built frontend and API from `http://localhost:3001`.
+The server listens on `http://0.0.0.0:3001` and serves the built frontend. Access it from any browser on your network using the host machine's IP.
 
-### Build the Windows installer (MSI)
-
-Requires Rust and the Tauri CLI. See [Tauri prerequisites](https://tauri.app/start/prerequisites/).
+### Keep it running with PM2
 
 ```bash
-npm run tauri:build
+npm install -g pm2
+pm2 start server/index.js --name troubadour
+pm2 save
+pm2 startup   # follow the printed command to auto-start on reboot
 ```
 
-This will:
-1. Copy the current `node.exe` sidecar (`scripts/prepare-sidecar.js`)
-2. Bundle the Express server with ncc (`scripts/bundle-server.js`)
-3. Build the Tauri app and produce an MSI in `src-tauri/target/release/bundle/msi/`
+### Updating
+
+```bash
+git pull
+npm install
+npm run build
+pm2 restart troubadour
+```
+
+---
+
+## Configuration
+
+Create a `.env` file in the project root (copy from `.env.example`):
+
+| Variable | Default | Description |
+|---|---|---|
+| `SERVER_PORT` | `3001` | Port the Express server listens on |
+| `DATA_DIR` | project root | Where the SQLite database and uploaded files are stored |
 
 ---
 
 ## Project Structure
 
 ```
-src/
-├── components/
-│   ├── scenario/       # Sidebar, control panel, edit modal
-│   ├── playlist/       # Track list and add-track modal
-│   ├── sfx/            # SFX matrix, buttons, panels
-│   ├── library/        # Library browser and sidebar
-│   └── ui/             # Shared components (Modal, Settings, etc.)
-├── lib/
-│   ├── audioEngine.js  # Howler.js singleton with crossfade logic
-│   └── storage.js      # localStorage utility
-├── store/
-│   ├── useAppStore.js  # Zustand root (composes slices)
-│   └── slices/         # settingsSlice, audioSlice, playlistSlice, etc.
-└── App.jsx
-server/
-├── index.js            # Express entry point
-├── db.js               # SQLite setup and migrations
-├── paths.js            # Data directory resolution
-└── routes/             # assets, playlists, sfx, libraries, images, tags
-src-tauri/
-├── tauri.conf.json     # Tauri config (bundled resources, updater endpoint)
-└── src/lib.rs          # Spawns the Express sidecar in production
-scripts/
-├── prepare-sidecar.js  # Copies node.exe for bundling
-└── bundle-server.js    # Compiles server with ncc for the MSI build
+troubadour/
+├── server/                  # Express API (Node.js)
+│   ├── index.js             # App entry, static file serving, error handler
+│   ├── db.js                # SQLite setup and schema migrations
+│   ├── paths.js             # DATA_DIR resolution
+│   └── routes/
+│       ├── playlists.js     # Scenarios CRUD
+│       ├── assets.js        # Audio file upload, streaming, metadata
+│       ├── sfx.js           # SFX panels and buttons
+│       ├── libraries.js     # External music library management
+│       ├── images.js        # Background image upload and processing
+│       └── tags.js          # Asset tag management
+├── src/                     # React frontend
+│   ├── App.jsx              # Root component
+│   ├── components/
+│   │   ├── scenario/        # Sidebar, control panel, edit modal
+│   │   ├── playlist/        # Track list, add-track modal
+│   │   ├── sfx/             # SFX matrix, buttons, panels
+│   │   ├── library/         # Library browser and sidebar
+│   │   └── ui/              # Shared components (Modal, Settings, etc.)
+│   ├── lib/
+│   │   ├── audioEngine.js   # Howler.js singleton with crossfade logic
+│   │   └── storage.js       # localStorage utility
+│   └── store/
+│       ├── useAppStore.js   # Zustand root (composes slices)
+│       ├── api.js           # Shared fetch wrapper
+│       ├── theme.js         # Theme constants and helpers
+│       └── slices/          # settingsSlice, audioSlice, playlistSlice, etc.
+├── .env.example             # Configuration template
+├── index.html
+├── package.json
+├── vite.config.js
+└── tailwind.config.js
 ```
 
----
-
-## Android / Phone
-
-> **The APK build is not supported.**
-
-The server runs on Node.js and cannot execute natively on Android ARM. Use the **browser via Tailscale** instead — open the server URL in Chrome on your phone and tap "Add to Home Screen" for an app-like experience. See [SETUP.md](SETUP.md#android--phone) for details.
+Data files (database, uploaded audio, images) live in the project root by default and are gitignored. Set `DATA_DIR` in `.env` to move them elsewhere.
 
 ---
 
-## Updates
+## Tech Stack
 
-- **Desktop app:** checks GitHub Releases automatically on launch and prompts to install new versions.
-- **Self-hosted:** `git pull && npm install && npm run build && pm2 restart troubadour`
+| Layer | Tech |
+|---|---|
+| Frontend | React 18, Vite 6 |
+| Styling | Tailwind CSS with CSS-variable theme system |
+| State | Zustand (split into slice files) |
+| Audio | Howler.js |
+| Icons | Lucide React |
+| Backend | Express 5 |
+| Database | SQLite via better-sqlite3 |
+
+---
+
+## Phone / Tablet Access
+
+The web interface is fully mobile-responsive. Access it over your local network or via [Tailscale](https://tailscale.com) for remote sessions. See **[SETUP.md](SETUP.md)** for step-by-step instructions.
+
+Tap **Add to Home Screen** in your mobile browser for an app-like experience.

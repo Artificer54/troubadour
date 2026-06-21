@@ -21,13 +21,6 @@ export function createSettingsSlice(set, get) {
     loopSingle: false,
     toggleLoopSingle: () => set((s) => ({ loopSingle: !s.loopSingle })),
 
-    // Server connection
-    serverUrl: storage.getStr('server-url', 'http://localhost:3001'),
-    setServerUrl: (url) => {
-      storage.setStr('server-url', url)
-      set({ serverUrl: url })
-    },
-
     // Theme
     activeTheme: storage.getStr('theme', 'darkfantasy'),
     setTheme: (name) => {

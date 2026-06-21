@@ -1,22 +1,27 @@
 node_modules
 dist
-src-tauri/binaries/
-src-tauri/target/
-src-tauri/gen/android/app/src/main/assets/node.exe
-src-tauri/gen/android/app/build/
-src-tauri/gen/android/.gradle/
-src-tauri/gen/android/local.properties
 .env
 .env.local
 .env.production
 .env.*.local
+
+# SQLite database files (project-root default location)
 troubador.db
 troubador.db-shm
 troubador.db-wal
+
+# Uploaded files (project-root default location)
 images/
 tracks/
+
+# Optional data/ directory (if DATA_DIR=./data is set)
+data/
+
+# Build artifacts
 releases/
 server-bundle/
+
+# Certificates
 *.key
 *.pem
 *.p12

@@ -4,6 +4,32 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-21 (session 15)
+
+### Removed
+- **Tauri desktop wrapper** — deleted `src-tauri/` (Rust app, Cargo files, MSI build config, Windows sidecar) and `scripts/` (prepare-sidecar, bundle-server). The app is now web-only; no Rust or desktop build toolchain required.
+- **`@tauri-apps/api` and `@tauri-apps/cli`** — removed from dependencies. Also removed `@vercel/ncc` and `wait-on` which were only needed for the Tauri build pipeline (27 packages removed total).
+- **Tauri npm scripts** — removed `tauri`, `tauri:dev`, `tauri:prebuild`, `tauri:build`, `tauri:portable` from `package.json`.
+- **Stale Supabase env vars** — cleared `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` from `.env`.
+- **`serverUrl` / `setServerUrl` from settings store** — was only meaningful in Tauri desktop mode to point the app at a remote server. Removed from `settingsSlice.js` and `SettingsModal.jsx`.
+
+### Changed
+- **`vite.config.js` simplified** — removed Tauri-specific `envPrefix`, `strictPort`, `clearScreen`, Chromium `build.target`, and `TAURI_DEBUG` sourcemap flag. Vite now uses its defaults.
+- **`server/paths.js` comment** — corrected stale "Electron" comment to reflect the actual self-hosted usage.
+- **Settings → Connection tab renamed to "Remote Access"** — replaced the server URL input (Tauri-only) with a plain informational guide on WiFi and Tailscale access. No URL field needed; the server is always the same origin in web mode.
+- **`NetworkStatusIcon` simplified** — removed Tauri runtime detection; always pings `/api/health` on the same origin. Popover now shows `window.location.origin` and concise LAN/Tailscale setup steps.
+- **`store/api.js` simplified** — removed Tauri runtime check; `api()` now always fetches relative paths.
+- **`audioSlice.js` `getTrackUrl`** — removed Tauri runtime check; always returns root-relative URLs.
+- **`SETUP.md` rewritten** — removed Tauri/MSI sections; focused on self-hosted web server, PM2, and Tailscale remote access.
+- **`README.md` rewritten** — self-hosted-first; removed Tauri badge and Windows MSI instructions; added configuration table and production deployment section.
+- **`.gitignore` updated** — removed `src-tauri/` entries (directory deleted); added `data/` for the optional `DATA_DIR=./data` layout.
+- **`CLAUDE.md` updated** — removed `src-tauri/` references from file security checklist.
+
+### Added
+- **`.env.example`** — configuration template documenting `SERVER_PORT` and `DATA_DIR` variables. New contributors can `cp .env.example .env` to get started.
+
+---
+
 ## [Unreleased] — 2026-06-21 (session 14)
 
 ### Added

@@ -11,19 +11,11 @@ function smartShuffle(arr) {
   return a
 }
 
-function getApiBase() {
-  if (typeof window !== 'undefined' && window.__TAURI_INTERNALS__) {
-    return storage.getStr('server-url', 'http://localhost:3001')
-  }
-  return ''
-}
-
-// For library assets, stream via the asset ID so the server resolves the library path.
-// For default uploaded tracks, use the static /tracks/ route directly.
+// Library assets stream via ID so the server resolves the library path.
+// Uploaded tracks use the static /tracks/ route directly.
 export function getTrackUrl(asset) {
-  const base = getApiBase()
-  if (asset.library_id) return `${base}/api/assets/stream/${asset.id}`
-  return `${base}/tracks/${asset.storage_path}`
+  if (asset.library_id) return `/api/assets/stream/${asset.id}`
+  return `/tracks/${asset.storage_path}`
 }
 
 export function createAudioSlice(set, get) {

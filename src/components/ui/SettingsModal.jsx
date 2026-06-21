@@ -44,10 +44,6 @@ export default function SettingsModal({ onClose }) {
   const setIntensityColor    = useAppStore((s) => s.setIntensityColor)
   const resetIntensityColors = useAppStore((s) => s.resetIntensityColors)
 
-  const serverUrl    = useAppStore((s) => s.serverUrl)
-  const setServerUrl = useAppStore((s) => s.setServerUrl)
-  const [serverInput, setServerInput] = useState(serverUrl)
-
   const [renamingId, setRenamingId]   = useState(null)
   const [renameValue, setRenameValue] = useState('')
   const [newPresetName, setNewPresetName] = useState('')
@@ -80,7 +76,7 @@ export default function SettingsModal({ onClose }) {
           { key: 'theme',      label: 'Theme',            icon: Palette },
           { key: 'intensity',  label: 'Intensity Colors', icon: Sliders },
           { key: 'libraries',  label: 'Libraries',        icon: Library },
-          { key: 'connection', label: 'Connection',       icon: Wifi },
+          { key: 'connection', label: 'Remote Access',     icon: Wifi },
           { key: 'help',       label: 'Help & Setup',     icon: BookOpen },
         ].map(({ key, label, icon: Icon }) => (
           <button
@@ -308,10 +304,9 @@ export default function SettingsModal({ onClose }) {
           <div className="w-36 shrink-0 space-y-0.5">
             {[
               { key: 'overview',   label: 'Overview' },
-              { key: 'desktop',    label: 'Desktop App' },
               { key: 'selfhost',   label: 'Self-Hosting' },
               { key: 'tailscale',  label: 'Tailscale' },
-              { key: 'android',    label: 'Android / Phone' },
+              { key: 'android',    label: 'Phone / Tablet' },
               { key: 'updates',    label: 'Updates' },
             ].map(({ key, label }) => (
               <button
@@ -337,12 +332,8 @@ export default function SettingsModal({ onClose }) {
               <p className="text-[10px] text-gray-500 uppercase tracking-widest pt-2">Ways to use it</p>
               <div className="space-y-2">
                 <div className="border border-border/40 rounded-lg p-2.5">
-                  <p className="text-xs font-medium text-gray-200">Desktop App (Windows MSI)</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Install and launch — everything is self-contained. Best for the DM on their own PC.</p>
-                </div>
-                <div className="border border-border/40 rounded-lg p-2.5">
                   <p className="text-xs font-medium text-gray-200">Self-hosted Web Server</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Run on any PC on your network. Players/co-DMs open the URL in their browser.</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Run on any PC on your network. Open the URL in any browser — on the host or from another device.</p>
                 </div>
                 <div className="border border-border/40 rounded-lg p-2.5">
                   <p className="text-xs font-medium text-gray-200">Remote via Tailscale</p>
@@ -351,21 +342,6 @@ export default function SettingsModal({ onClose }) {
               </div>
             </>)}
 
-            {helpSection === 'desktop' && (<>
-              <p className="text-base font-semibold text-gray-100">Desktop App Setup</p>
-              <p className="text-xs text-gray-400">The Windows MSI installer includes everything — no Node.js or server setup needed.</p>
-              <p className="text-[10px] text-gray-500 uppercase tracking-widest pt-2">Install steps</p>
-              <ol className="space-y-1.5 text-xs text-gray-400 list-decimal list-inside">
-                <li>Download <span className="text-gray-200">Troubadour_x.x.x_x64-setup.msi</span> from the GitHub Releases page</li>
-                <li>Run the installer — Windows may show a SmartScreen warning; click "More info" → "Run anyway"</li>
-                <li>Launch Troubadour from the Start menu</li>
-                <li>The app starts its own audio server in the background — no setup needed</li>
-              </ol>
-              <div className="border border-amber-800/40 bg-amber-900/10 rounded-lg p-2.5 mt-2">
-                <p className="text-xs text-amber-400 font-medium">Firewall note</p>
-                <p className="text-xs text-amber-500/80 mt-0.5">If Windows Firewall asks about network access, allow it — otherwise the app's internal server can't start.</p>
-              </div>
-            </>)}
 
             {helpSection === 'selfhost' && (<>
               <p className="text-base font-semibold text-gray-100">Self-Hosting (Web Server)</p>
@@ -404,19 +380,14 @@ pm2 startup    # auto-start on reboot`}</pre>
               </ol>
               <p className="text-xs text-gray-500 pt-2">No port forwarding or router changes needed. Tailscale handles NAT traversal.</p>
               <div className="border border-border/40 rounded-lg p-2.5 mt-2">
-                <p className="text-xs font-medium text-gray-300">Using the desktop app with Tailscale</p>
-                <p className="text-xs text-gray-500 mt-0.5">In the Connection tab, set the server URL to your PC's Tailscale IP. This lets a tablet or phone use the same Troubadour instance the desktop app is running.</p>
+                <p className="text-xs font-medium text-gray-300">Add to home screen</p>
+                <p className="text-xs text-gray-500 mt-0.5">In your phone&apos;s browser, tap <span className="text-gray-200">Add to Home Screen</span> to pin Troubadour as a full-screen icon.</p>
               </div>
             </>)}
 
             {helpSection === 'android' && (<>
-              <p className="text-base font-semibold text-gray-100">Android / Phone Access</p>
-              <div className="border border-amber-800/40 bg-amber-900/10 rounded-lg p-2.5">
-                <p className="text-xs text-amber-400 font-medium">The APK build is not supported</p>
-                <p className="text-xs text-amber-500/80 mt-1">The Troubadour server is a Node.js app and cannot run natively on Android. The APK that was generated includes a Windows binary that Android can't execute — it will either fail to install or crash immediately.</p>
-              </div>
-              <p className="text-[10px] text-gray-500 uppercase tracking-widest pt-3">Recommended: use the browser</p>
-              <p className="text-xs text-gray-400">Android phones and tablets can access Troubadour perfectly through the browser — no app install needed:</p>
+              <p className="text-base font-semibold text-gray-100">Phone / Tablet Access</p>
+              <p className="text-xs text-gray-400">Troubadour works great on phones and tablets — no app install needed. Just open the URL in a browser:</p>
               <ol className="space-y-1.5 text-xs text-gray-400 list-decimal list-inside mt-2">
                 <li>Run Troubadour as a web server on your PC (see <button onClick={() => setHelpSection('selfhost')} className="text-gold underline">Self-Hosting</button>)</li>
                 <li>Connect your phone to Tailscale or the same WiFi network</li>
@@ -429,9 +400,8 @@ pm2 startup    # auto-start on reboot`}</pre>
 
             {helpSection === 'updates' && (<>
               <p className="text-base font-semibold text-gray-100">Updating Troubadour</p>
-              <p className="text-[10px] text-gray-500 uppercase tracking-widest pt-1">Desktop App</p>
-              <p className="text-xs text-gray-400">The app checks for updates automatically on launch. If a new version is available on GitHub Releases, you'll be prompted to install it. The update downloads and replaces the old version.</p>
-              <p className="text-[10px] text-gray-500 uppercase tracking-widest pt-3">Self-hosted</p>
+              <p className="text-xs text-gray-400">Run these commands in the project directory to pull the latest version from GitHub:</p>
+              <p className="text-[10px] text-gray-500 uppercase tracking-widest pt-1">Self-hosted</p>
               <pre className="bg-midnight text-xs text-gray-300 rounded-lg p-2.5 overflow-x-auto leading-relaxed">{`git pull
 npm install
 npm run build
@@ -449,63 +419,37 @@ pm2 restart troubadour`}</pre>
         </div>
       )}
 
-      {/* ── Connection tab ─────────────────────────────────────── */}
+      {/* ── Remote Access tab ─────────────────────────────────── */}
       {tab === 'connection' && (
         <div className="space-y-5">
           <div>
-            <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Server Address</p>
-            <p className="text-xs text-gray-500 mb-3">
-              The URL of the Troubadour Express server. Keep <code className="bg-midnight px-1 rounded text-gray-300">http://localhost:3001</code> on the desktop app.
-              On a phone or tablet connected to the same WiFi, enter your PC's local IP — e.g. <code className="bg-midnight px-1 rounded text-gray-300">http://192.168.1.10:3001</code>.
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">About Remote Access</p>
+            <p className="text-xs text-gray-500">
+              Troubadour is a web app — any device on your network can open it in a browser. No app install needed on phones or tablets.
             </p>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={serverInput}
-                onChange={e => setServerInput(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') setServerUrl(serverInput.trim()) }}
-                placeholder="http://localhost:3001"
-                className="input-dark flex-1 text-sm font-mono"
-              />
-              <button
-                onClick={() => setServerUrl(serverInput.trim())}
-                className="px-4 py-2 bg-gold text-midnight text-sm font-semibold rounded-lg"
-              >
-                Save
-              </button>
-            </div>
-            {serverUrl !== serverInput.trim() && (
-              <p className="text-[10px] text-amber-400 mt-1">Unsaved — press Save or Enter to apply.</p>
-            )}
-            {serverUrl === serverInput.trim() && serverUrl !== 'http://localhost:3001' && (
-              <p className="text-[10px] text-green-400 mt-1">Connected to remote server.</p>
-            )}
           </div>
 
           <div className="border border-border/40 rounded-lg p-3 space-y-1.5">
-            <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-2">Local WiFi</p>
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-2">Local WiFi (same network)</p>
             <p className="text-xs text-gray-400">1. On your PC, open a terminal and run <code className="bg-midnight px-1 rounded text-gray-300">ipconfig</code></p>
             <p className="text-xs text-gray-400">2. Look for <span className="text-gray-300">IPv4 Address</span> under your WiFi adapter</p>
-            <p className="text-xs text-gray-400">3. Enter that IP here with port 3001, e.g. <code className="bg-midnight px-1 rounded text-gray-300">http://192.168.1.10:3001</code></p>
-            <p className="text-xs text-gray-500 pt-1">Both your PC and phone/tablet must be on the same network.</p>
+            <p className="text-xs text-gray-400">3. On your phone, open <code className="bg-midnight px-1 rounded text-gray-300">http://192.168.x.x:3001</code></p>
+            <p className="text-xs text-gray-500 pt-1">Both your PC and phone must be on the same WiFi network.</p>
           </div>
 
           <div className="border border-border/40 rounded-lg p-3 space-y-1.5">
-            <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-2">Tailscale (remote access)</p>
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-2">Tailscale (works across networks)</p>
             <p className="text-xs text-gray-400">1. Install <a href="https://tailscale.com" target="_blank" rel="noreferrer" className="text-gold underline">Tailscale</a> on your PC and phone</p>
             <p className="text-xs text-gray-400">2. Sign in with the same account on both devices</p>
-            <p className="text-xs text-gray-400">3. Find your PC's Tailscale IP in the Tailscale app (looks like <span className="text-gray-300">100.x.x.x</span>)</p>
-            <p className="text-xs text-gray-400">4. Enter it here: <code className="bg-midnight px-1 rounded text-gray-300">http://100.x.x.x:3001</code></p>
-            <p className="text-xs text-gray-500 pt-1">Works from anywhere — different networks, coffee shops, remote sessions.</p>
+            <p className="text-xs text-gray-400">3. Find your PC&apos;s Tailscale IP in the Tailscale app (starts with <span className="text-gray-300">100.</span>)</p>
+            <p className="text-xs text-gray-400">4. On your phone, open <code className="bg-midnight px-1 rounded text-gray-300">http://100.x.x.x:3001</code></p>
+            <p className="text-xs text-gray-500 pt-1">Works from anywhere — coffee shops, remote sessions, different networks. No port forwarding needed.</p>
           </div>
 
-          <button
-            onClick={() => { setServerInput('http://localhost:3001'); setServerUrl('http://localhost:3001') }}
-            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gold transition-colors"
-          >
-            <RotateCcw size={11} />
-            Reset to localhost
-          </button>
+          <div className="border border-border/40 rounded-lg p-3">
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-2">Add to Home Screen</p>
+            <p className="text-xs text-gray-400">On Android or iOS: open the URL in Chrome or Safari, then tap <span className="text-gray-200">Add to Home Screen</span> for a full-screen app-like experience.</p>
+          </div>
         </div>
       )}
     </Modal>
