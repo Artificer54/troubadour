@@ -4,9 +4,23 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
-## [Unreleased] — 2026-06-21 (session 13)
+## [Unreleased] — 2026-06-21 (session 14)
 
 ### Added
+- **`SETUP.md`** — comprehensive self-hosting, Tailscale, Android, and update guide for end users and developers.
+- **Help & Setup tab in Settings** — in-app documentation covering all deployment modes (desktop MSI, self-hosted, Tailscale, Android via browser, updates). Accessible without leaving the app.
+- **Tailscale instructions in Settings → Connection** — Connection tab now explains both local WiFi and Tailscale setup with step-by-step directions.
+- **`scripts/bundle-server.js`** — compiles the Express server with `@vercel/ncc` into `server-bundle/` (single JS file + native addons). This fixes the production Tauri build where the server previously crashed on launch because `node_modules` were not bundled.
+- **`tauri-plugin-updater` + `tauri-plugin-dialog`** — desktop app now checks GitHub Releases for new versions on startup and prompts to install.
+
+### Changed
+- `tauri:prebuild` now runs `bundle-server.js` after `prepare-sidecar.js`.
+- `tauri.conf.json` resources updated to bundle `server-bundle/` instead of the raw `server/` directory.
+- `src-tauri/src/lib.rs` updated to spawn `server-bundle/index.js` and pass `NODE_PATH` for native addon resolution.
+
+### Fixed
+- **Tauri production build broken** — the installed MSI app showed "cannot connect" because `node_modules` (express, better-sqlite3, etc.) were never bundled. The `ncc` compilation step fixes this.
+
 - **Multi-library music support** — Users can register any local folder as a music library via Settings → Libraries. Troubadour scans the folder and makes all audio files available without copying them. Remote clients (phone/tablet) stream audio from all libraries automatically via the server.
 - `music_libraries` DB table — stores registered library paths, names, and enabled state.
 - `library_id` column on `audio_assets` — links scanned library files back to their source library.

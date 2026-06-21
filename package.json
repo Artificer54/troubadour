@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "tauri:dev": "concurrently --kill-others-on-fail -n servers,tauri \"npm run dev\" \"wait-on http://localhost:5173 http://localhost:3001/api/playlists && tauri dev\"",
-    "tauri:prebuild": "node scripts/prepare-sidecar.js",
+    "tauri:prebuild": "node scripts/prepare-sidecar.js && node scripts/bundle-server.js",
     "tauri:build": "npm run tauri:prebuild && tauri build",
     "tauri:portable": "node scripts/assemble-portable.js"
   },

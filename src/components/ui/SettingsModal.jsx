@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Check, Palette, Sliders, RotateCcw, Plus, Trash2, Pencil, X, Wifi, Library } from 'lucide-react'
+import { Check, Palette, Sliders, RotateCcw, Plus, Trash2, Pencil, X, Wifi, Library, BookOpen } from 'lucide-react'
 import { useAppStore, PRESET_THEMES, DEFAULT_CUSTOM_COLORS } from '../../store/useAppStore'
 import Modal from './Modal'
 import LibraryManager from './LibraryManager'
@@ -28,6 +28,7 @@ const CUSTOM_COLOR_KEYS = [
 
 export default function SettingsModal({ onClose }) {
   const [tab, setTab] = useState('theme')
+  const [helpSection, setHelpSection] = useState('overview')
 
   const activeTheme          = useAppStore((s) => s.activeTheme)
   const setTheme             = useAppStore((s) => s.setTheme)
@@ -80,6 +81,7 @@ export default function SettingsModal({ onClose }) {
           { key: 'intensity',  label: 'Intensity Colors', icon: Sliders },
           { key: 'libraries',  label: 'Libraries',        icon: Library },
           { key: 'connection', label: 'Connection',       icon: Wifi },
+          { key: 'help',       label: 'Help & Setup',     icon: BookOpen },
         ].map(({ key, label, icon: Icon }) => (
           <button
             key={key}
@@ -299,6 +301,154 @@ export default function SettingsModal({ onClose }) {
       {/* ── Libraries tab ─────────────────────────────────────── */}
       {tab === 'libraries' && <LibraryManager />}
 
+      {/* ── Help & Setup tab ───────────────────────────────────── */}
+      {tab === 'help' && (
+        <div className="flex gap-4">
+          {/* Sidebar nav */}
+          <div className="w-36 shrink-0 space-y-0.5">
+            {[
+              { key: 'overview',   label: 'Overview' },
+              { key: 'desktop',    label: 'Desktop App' },
+              { key: 'selfhost',   label: 'Self-Hosting' },
+              { key: 'tailscale',  label: 'Tailscale' },
+              { key: 'android',    label: 'Android / Phone' },
+              { key: 'updates',    label: 'Updates' },
+            ].map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setHelpSection(key)}
+                className={`w-full text-left px-2.5 py-1.5 rounded text-xs transition-colors ${
+                  helpSection === key
+                    ? 'bg-gold/15 text-gold font-medium'
+                    : 'text-gray-400 hover:text-gray-200 hover:bg-border/40'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 min-w-0 text-sm text-gray-300 space-y-3 overflow-auto max-h-[55vh]">
+
+            {helpSection === 'overview' && (<>
+              <p className="text-base font-semibold text-gray-100">What is Troubadour?</p>
+              <p className="text-xs text-gray-400">Troubadour is a TTRPG audio manager. It lets you organize music into Scenarios (playlists), switch between intensity levels during play, and trigger sound effects from a configurable SFX Matrix.</p>
+              <p className="text-[10px] text-gray-500 uppercase tracking-widest pt-2">Ways to use it</p>
+              <div className="space-y-2">
+                <div className="border border-border/40 rounded-lg p-2.5">
+                  <p className="text-xs font-medium text-gray-200">Desktop App (Windows MSI)</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Install and launch — everything is self-contained. Best for the DM on their own PC.</p>
+                </div>
+                <div className="border border-border/40 rounded-lg p-2.5">
+                  <p className="text-xs font-medium text-gray-200">Self-hosted Web Server</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Run on any PC on your network. Players/co-DMs open the URL in their browser.</p>
+                </div>
+                <div className="border border-border/40 rounded-lg p-2.5">
+                  <p className="text-xs font-medium text-gray-200">Remote via Tailscale</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Access from anywhere — home, game store, online session. Works across different networks.</p>
+                </div>
+              </div>
+            </>)}
+
+            {helpSection === 'desktop' && (<>
+              <p className="text-base font-semibold text-gray-100">Desktop App Setup</p>
+              <p className="text-xs text-gray-400">The Windows MSI installer includes everything — no Node.js or server setup needed.</p>
+              <p className="text-[10px] text-gray-500 uppercase tracking-widest pt-2">Install steps</p>
+              <ol className="space-y-1.5 text-xs text-gray-400 list-decimal list-inside">
+                <li>Download <span className="text-gray-200">Troubadour_x.x.x_x64-setup.msi</span> from the GitHub Releases page</li>
+                <li>Run the installer — Windows may show a SmartScreen warning; click "More info" → "Run anyway"</li>
+                <li>Launch Troubadour from the Start menu</li>
+                <li>The app starts its own audio server in the background — no setup needed</li>
+              </ol>
+              <div className="border border-amber-800/40 bg-amber-900/10 rounded-lg p-2.5 mt-2">
+                <p className="text-xs text-amber-400 font-medium">Firewall note</p>
+                <p className="text-xs text-amber-500/80 mt-0.5">If Windows Firewall asks about network access, allow it — otherwise the app's internal server can't start.</p>
+              </div>
+            </>)}
+
+            {helpSection === 'selfhost' && (<>
+              <p className="text-base font-semibold text-gray-100">Self-Hosting (Web Server)</p>
+              <p className="text-xs text-gray-400">Run Troubadour as a local web server so any browser on your network can use it — no installation on client devices.</p>
+              <p className="text-[10px] text-gray-500 uppercase tracking-widest pt-2">Requirements</p>
+              <ul className="text-xs text-gray-400 space-y-1 list-disc list-inside">
+                <li>Node.js 18+ installed on the host PC</li>
+                <li>Git (to pull updates)</li>
+              </ul>
+              <p className="text-[10px] text-gray-500 uppercase tracking-widest pt-3">First-time setup</p>
+              <pre className="bg-midnight text-xs text-gray-300 rounded-lg p-2.5 overflow-x-auto leading-relaxed">{`git clone https://github.com/artificer54/Troubador
+cd Troubador
+npm install
+npm run build
+npm start`}</pre>
+              <p className="text-xs text-gray-400">The server runs on <span className="text-gray-200">http://0.0.0.0:3001</span>. Open <span className="text-gray-200">http://localhost:3001</span> on the host, or use the host's IP from other devices.</p>
+              <p className="text-[10px] text-gray-500 uppercase tracking-widest pt-3">Run in the background (PM2)</p>
+              <pre className="bg-midnight text-xs text-gray-300 rounded-lg p-2.5 overflow-x-auto leading-relaxed">{`npm install -g pm2
+pm2 start server/index.js --name troubadour
+pm2 save
+pm2 startup    # auto-start on reboot`}</pre>
+              <p className="text-[10px] text-gray-500 uppercase tracking-widest pt-3">Data location</p>
+              <p className="text-xs text-gray-400">Uploaded audio lives in <span className="text-gray-200">./tracks/</span> and the database at <span className="text-gray-200">./troubador.db</span> — both next to the project folder.</p>
+            </>)}
+
+            {helpSection === 'tailscale' && (<>
+              <p className="text-base font-semibold text-gray-100">Tailscale Remote Access</p>
+              <p className="text-xs text-gray-400">Tailscale creates a private VPN between your devices. Use it to reach Troubadour from your phone, tablet, or a friend's computer — even from a different network.</p>
+              <p className="text-[10px] text-gray-500 uppercase tracking-widest pt-2">Setup</p>
+              <ol className="space-y-1.5 text-xs text-gray-400 list-decimal list-inside">
+                <li>Install Tailscale on the PC running Troubadour — <span className="text-gray-200">tailscale.com/download</span></li>
+                <li>Install Tailscale on your phone/tablet</li>
+                <li>Sign in with the same account on both</li>
+                <li>In the Tailscale app, find your PC's Tailscale IP (starts with <span className="text-gray-200">100.</span>)</li>
+                <li>Open a browser on your phone and go to <span className="text-gray-200">http://100.x.x.x:3001</span></li>
+              </ol>
+              <p className="text-xs text-gray-500 pt-2">No port forwarding or router changes needed. Tailscale handles NAT traversal.</p>
+              <div className="border border-border/40 rounded-lg p-2.5 mt-2">
+                <p className="text-xs font-medium text-gray-300">Using the desktop app with Tailscale</p>
+                <p className="text-xs text-gray-500 mt-0.5">In the Connection tab, set the server URL to your PC's Tailscale IP. This lets a tablet or phone use the same Troubadour instance the desktop app is running.</p>
+              </div>
+            </>)}
+
+            {helpSection === 'android' && (<>
+              <p className="text-base font-semibold text-gray-100">Android / Phone Access</p>
+              <div className="border border-amber-800/40 bg-amber-900/10 rounded-lg p-2.5">
+                <p className="text-xs text-amber-400 font-medium">The APK build is not supported</p>
+                <p className="text-xs text-amber-500/80 mt-1">The Troubadour server is a Node.js app and cannot run natively on Android. The APK that was generated includes a Windows binary that Android can't execute — it will either fail to install or crash immediately.</p>
+              </div>
+              <p className="text-[10px] text-gray-500 uppercase tracking-widest pt-3">Recommended: use the browser</p>
+              <p className="text-xs text-gray-400">Android phones and tablets can access Troubadour perfectly through the browser — no app install needed:</p>
+              <ol className="space-y-1.5 text-xs text-gray-400 list-decimal list-inside mt-2">
+                <li>Run Troubadour as a web server on your PC (see <button onClick={() => setHelpSection('selfhost')} className="text-gold underline">Self-Hosting</button>)</li>
+                <li>Connect your phone to Tailscale or the same WiFi network</li>
+                <li>Open Chrome or Firefox on your phone</li>
+                <li>Navigate to the server's IP address (e.g. <span className="text-gray-200">http://192.168.1.10:3001</span>)</li>
+                <li>Tap the browser's "Add to Home Screen" option to pin it like an app</li>
+              </ol>
+              <p className="text-xs text-gray-500 pt-2">The web UI is fully mobile-responsive. Adding it to your home screen gives an app-like experience.</p>
+            </>)}
+
+            {helpSection === 'updates' && (<>
+              <p className="text-base font-semibold text-gray-100">Updating Troubadour</p>
+              <p className="text-[10px] text-gray-500 uppercase tracking-widest pt-1">Desktop App</p>
+              <p className="text-xs text-gray-400">The app checks for updates automatically on launch. If a new version is available on GitHub Releases, you'll be prompted to install it. The update downloads and replaces the old version.</p>
+              <p className="text-[10px] text-gray-500 uppercase tracking-widest pt-3">Self-hosted</p>
+              <pre className="bg-midnight text-xs text-gray-300 rounded-lg p-2.5 overflow-x-auto leading-relaxed">{`git pull
+npm install
+npm run build
+pm2 restart troubadour`}</pre>
+              <p className="text-xs text-gray-400">Run these in the project directory whenever you want to pull the latest changes from GitHub.</p>
+              <p className="text-[10px] text-gray-500 uppercase tracking-widest pt-3">What gets updated</p>
+              <ul className="text-xs text-gray-400 space-y-1 list-disc list-inside">
+                <li>New features and UI changes</li>
+                <li>Bug fixes</li>
+                <li>Your audio files and database are <span className="text-gray-200">never</span> touched by updates</li>
+              </ul>
+            </>)}
+
+          </div>
+        </div>
+      )}
+
       {/* ── Connection tab ─────────────────────────────────────── */}
       {tab === 'connection' && (
         <div className="space-y-5">
@@ -333,11 +483,20 @@ export default function SettingsModal({ onClose }) {
           </div>
 
           <div className="border border-border/40 rounded-lg p-3 space-y-1.5">
-            <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-2">How to find your PC's IP</p>
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-2">Local WiFi</p>
             <p className="text-xs text-gray-400">1. On your PC, open a terminal and run <code className="bg-midnight px-1 rounded text-gray-300">ipconfig</code></p>
             <p className="text-xs text-gray-400">2. Look for <span className="text-gray-300">IPv4 Address</span> under your WiFi adapter</p>
-            <p className="text-xs text-gray-400">3. Enter that IP here, keeping port <span className="text-gray-300">3001</span></p>
-            <p className="text-xs text-gray-500 pt-1">Both your PC and phone must be on the same WiFi network.</p>
+            <p className="text-xs text-gray-400">3. Enter that IP here with port 3001, e.g. <code className="bg-midnight px-1 rounded text-gray-300">http://192.168.1.10:3001</code></p>
+            <p className="text-xs text-gray-500 pt-1">Both your PC and phone/tablet must be on the same network.</p>
+          </div>
+
+          <div className="border border-border/40 rounded-lg p-3 space-y-1.5">
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-2">Tailscale (remote access)</p>
+            <p className="text-xs text-gray-400">1. Install <a href="https://tailscale.com" target="_blank" rel="noreferrer" className="text-gold underline">Tailscale</a> on your PC and phone</p>
+            <p className="text-xs text-gray-400">2. Sign in with the same account on both devices</p>
+            <p className="text-xs text-gray-400">3. Find your PC's Tailscale IP in the Tailscale app (looks like <span className="text-gray-300">100.x.x.x</span>)</p>
+            <p className="text-xs text-gray-400">4. Enter it here: <code className="bg-midnight px-1 rounded text-gray-300">http://100.x.x.x:3001</code></p>
+            <p className="text-xs text-gray-500 pt-1">Works from anywhere — different networks, coffee shops, remote sessions.</p>
           </div>
 
           <button
