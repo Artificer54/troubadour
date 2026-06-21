@@ -8,6 +8,7 @@ All notable changes to Troubadour are recorded here.
 
 ### Added
 - **File security rules in CLAUDE.md** — explicit pre-commit checklist to prevent secrets, personal data, and binaries from being committed to git.
+- **WIP notice in README** — banner and badge clarifying this is a personal project shared publicly, not a stable release. Also corrected Vite badge from v5 to v6.
 
 ### Changed
 - **`.gitignore` hardened** — added `server-bundle/`, `*.key`, `*.pem`, `*.p12`, `*.pfx`, and all `.env` variants (`.env.production`, `.env.*.local`) to prevent accidental exposure of secrets or build artifacts.

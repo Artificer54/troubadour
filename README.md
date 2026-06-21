@@ -1,8 +1,10 @@
 # Troubadour
 
+> **⚠️ Work in Progress** — This app is actively developed and used personally. Features may change, break, or be incomplete. Contributions and feedback are welcome, but treat this as a personal project shared publicly rather than a stable release.
+
 A self-hosted audio manager built for Dungeon Masters. Organize ambient music into **Scenarios**, switch between intensity levels on the fly, and trigger sound effects from a customizable button matrix — all running locally with no cloud dependencies.
 
-![React](https://img.shields.io/badge/React-18-blue) ![Vite](https://img.shields.io/badge/Vite-5-purple) ![Express](https://img.shields.io/badge/Express-5-lightgrey) ![SQLite](https://img.shields.io/badge/SQLite-local-orange) ![Tauri](https://img.shields.io/badge/Tauri-2-yellow) ![Tailwind](https://img.shields.io/badge/Tailwind-CSS-teal)
+![WIP](https://img.shields.io/badge/status-work%20in%20progress-orange) ![React](https://img.shields.io/badge/React-18-blue) ![Vite](https://img.shields.io/badge/Vite-6-purple) ![Express](https://img.shields.io/badge/Express-5-lightgrey) ![SQLite](https://img.shields.io/badge/SQLite-local-orange) ![Tauri](https://img.shields.io/badge/Tauri-2-yellow) ![Tailwind](https://img.shields.io/badge/Tailwind-CSS-teal)
 
 ---
 
