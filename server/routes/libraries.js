@@ -61,12 +61,10 @@ router.post('/', (req, res) => {
 
 router.post('/browse-folder', (_req, res) => {
   const ps =
-    `Add-Type -AssemblyName System.Windows.Forms; ` +
-    `$d = New-Object System.Windows.Forms.FolderBrowserDialog; ` +
-    `$d.Description = 'Select a music folder for Troubadour'; ` +
-    `$d.ShowNewFolderButton = $true; ` +
-    `if ($d.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { Write-Output $d.SelectedPath }`
-  exec(`powershell -NonInteractive -Command "${ps}"`, { timeout: 30000 }, (err, stdout) => {
+    `$s = New-Object -ComObject Shell.Application; ` +
+    `$f = $s.BrowseForFolder(0, 'Select a music folder for Troubadour', 0, 0); ` +
+    `if ($f) { Write-Output $f.Self.Path }`
+  exec(`powershell -NoProfile -NonInteractive -Command "${ps}"`, { timeout: 30000 }, (err, stdout) => {
     if (err) return res.json({ path: null })
     const path = stdout.trim()
     res.json({ path: path || null })

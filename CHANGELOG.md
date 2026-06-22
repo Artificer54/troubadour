@@ -10,6 +10,9 @@ All notable changes to Troubadour are recorded here.
 - **Folder picker Browse button** — re-added `POST /api/libraries/browse-folder` endpoint using `child_process.exec` with a 30-second timeout so it never hangs the server in headless/PM2 contexts. Added a Browse button to the Library sidebar's "Add Library" form (Settings → Libraries already had one but the endpoint was gone).
 
 ### Fixed
+- **Browse folder dialog slow to open** — switched from Windows Forms (`Add-Type -AssemblyName System.Windows.Forms`) to Shell.Application COM object and added `-NoProfile` flag; eliminates the multi-second PS profile + assembly load delay.
+
+### Fixed
 - **Mobile Settings layout** — Help & Setup tab nav now renders as horizontal pills on narrow screens instead of a fixed-width sidebar that cramped the content. Tab bar wraps to two rows on mobile instead of overflowing.
 
 ---
