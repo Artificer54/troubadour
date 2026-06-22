@@ -67,6 +67,16 @@ export function createAssetSlice(set, get) {
       set((s) => ({ audioAssets: s.audioAssets.map((a) => a.id === assetId ? { ...a, tags } : a) }))
     },
 
+    toggleAssetHidden: async (id, hidden) => {
+      const res = await api(`/api/assets/${id}/hidden`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hidden }),
+      })
+      if (!res.ok) return
+      set((s) => ({ audioAssets: s.audioAssets.map((a) => a.id === id ? { ...a, hidden: hidden ? 1 : 0 } : a) }))
+    },
+
     removeTagFromAsset: async (assetId, tag) => {
       const res = await api(`/api/tags/asset/${assetId}/${encodeURIComponent(tag)}`, { method: 'DELETE' })
       if (!res.ok) return

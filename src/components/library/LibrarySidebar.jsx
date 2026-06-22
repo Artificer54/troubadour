@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Search, Play, Pause, X, Plus, Music2, Tag, ArrowRight, ChevronLeft, FolderPlus, Upload, Loader, FolderInput } from 'lucide-react'
+import { Search, Play, Pause, X, Plus, Music2, Tag, ArrowRight, ChevronLeft, FolderPlus, Upload, Loader, FolderInput, Eye, EyeOff } from 'lucide-react'
 import { useAppStore } from '../../store/useAppStore'
 import { previewEngine } from '../../lib/previewEngine'
 
@@ -128,16 +128,20 @@ export default function LibrarySidebar() {
   const pauseLibraryPreview = useAppStore((s) => s.pauseLibraryPreview)
   const stopLibraryPreview = useAppStore((s) => s.stopLibraryPreview)
   const removeTag = useAppStore((s) => s.removeTagFromAsset)
+  const toggleAssetHidden = useAppStore((s) => s.toggleAssetHidden)
   const setLibraryOpen = useAppStore((s) => s.setLibraryOpen)
   const playlistVolume = useAppStore((s) => s.playlistVolume)
   const addMusicLibrary = useAppStore((s) => s.addMusicLibrary)
   const uploadAudio = useAppStore((s) => s.uploadAudio)
   const fetchAudioAssets = useAppStore((s) => s.fetchAudioAssets)
+  const musicLibraries = useAppStore((s) => s.musicLibraries)
 
   const [search, setSearch] = useState('')
   const [activeTags, setActiveTags] = useState([])
   const [addScenarioFor, setAddScenarioFor] = useState(null)
   const [editTagFor, setEditTagFor] = useState(null)
+  const [showHidden, setShowHidden] = useState(false)
+  const [showPathFor, setShowPathFor] = useState(null)
   const [progress, setProgress] = useState(0)
   const [elapsed, setElapsed] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -224,7 +228,14 @@ export default function LibrarySidebar() {
   const toggleTagFilter = (tag) =>
     setActiveTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
 
+  const getFullPath = (asset) => {
+    if (!asset.library_id) return null
+    const lib = musicLibraries.find(l => l.id === asset.library_id)
+    return lib ? `${lib.path}\\${asset.storage_path}` : null
+  }
+
   const filtered = audioAssets.filter(a => {
+    if (!showHidden && a.hidden) return false
     const q = search.toLowerCase()
     const matchesSearch = !q || a.name.toLowerCase().includes(q) || (a.artist ?? '').toLowerCase().includes(q) || (a.album ?? '').toLowerCase().includes(q)
     const matchesTags = activeTags.length === 0 || activeTags.every(t => (a.tags ?? []).includes(t))
@@ -252,7 +263,19 @@ export default function LibrarySidebar() {
           </button>
           <span className="text-border mx-1">·</span>
           <span className="font-fantasy text-gold text-xs tracking-widest uppercase">Library</span>
-          <span className="ml-auto text-[10px] text-gray-600">{audioAssets.length} tracks</span>
+          <div className="ml-auto flex items-center gap-1.5">
+            {audioAssets.some(a => a.hidden) && (
+              <button
+                onClick={() => setShowHidden(v => !v)}
+                title={showHidden ? 'Hide hidden tracks' : 'Show hidden tracks'}
+                className={`flex items-center gap-1 text-[10px] transition-colors ${showHidden ? 'text-gold' : 'text-gray-600 hover:text-gray-400'}`}
+              >
+                {showHidden ? <Eye size={11}/> : <EyeOff size={11}/>}
+                {audioAssets.filter(a => a.hidden).length} hidden
+              </button>
+            )}
+            <span className="text-[10px] text-gray-600">{audioAssets.length} tracks</span>
+          </div>
         </div>
 
         {/* Search */}
@@ -335,12 +358,14 @@ export default function LibrarySidebar() {
 
         {filtered.map(asset => {
           const isActive = libraryPreview.assetId === asset.id
+          const fullPath = getFullPath(asset)
+          const isPathShown = showPathFor === asset.id
           return (
             <div
               key={asset.id}
               draggable
               onDragStart={e => handleDragStart(e, asset)}
-              className={`group flex items-center gap-2 px-3 py-2 border-b border-border/30 cursor-grab active:cursor-grabbing transition-colors ${isActive ? 'bg-gold/8' : 'hover:bg-panel/60'}`}
+              className={`group flex items-center gap-2 px-3 py-2 border-b border-border/30 cursor-grab active:cursor-grabbing transition-colors ${isActive ? 'bg-gold/8' : 'hover:bg-panel/60'} ${asset.hidden ? 'opacity-40' : ''}`}
               onClick={() => isActive ? pauseLibraryPreview() : playLibraryPreview(asset)}
             >
               {/* Cover with play overlay */}
@@ -359,6 +384,12 @@ export default function LibrarySidebar() {
                 <p className={`text-xs truncate font-medium ${isActive ? 'text-gold' : 'text-gray-200'}`}>{asset.name}</p>
                 {(asset.artist || asset.album) && (
                   <p className="text-[10px] text-gray-500 truncate">{[asset.artist, asset.album].filter(Boolean).join(' · ')}</p>
+                )}
+                {/* File path (toggleable) */}
+                {isPathShown && (
+                  <p className="text-[10px] font-mono text-gray-600 truncate mt-0.5" title={fullPath ?? 'Uploaded track'}>
+                    {fullPath ?? 'Uploaded track (no path)'}
+                  </p>
                 )}
                 {/* Tags */}
                 <div className="flex flex-wrap gap-0.5 mt-0.5" onClick={e => e.stopPropagation()}>
@@ -384,18 +415,37 @@ export default function LibrarySidebar() {
                 <span className="text-[10px] text-gray-600 shrink-0">{fmt(asset.duration_sec)}</span>
               )}
 
-              {/* Add to scenario button */}
-              <div className="relative shrink-0" onClick={e => e.stopPropagation()}>
+              {/* Action buttons */}
+              <div className="shrink-0 flex items-center gap-0.5" onClick={e => e.stopPropagation()}>
+                {/* Show path */}
                 <button
-                  onClick={() => setAddScenarioFor(addScenarioFor === asset.id ? null : asset.id)}
-                  title="Add to current scenario"
-                  className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded border border-border text-gray-500 hover:text-gold hover:border-gold/50 transition-all"
+                  onClick={() => setShowPathFor(isPathShown ? null : asset.id)}
+                  title={isPathShown ? 'Hide path' : 'Show file path'}
+                  className={`opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded border border-border transition-all ${isPathShown ? 'text-gold border-gold/50 opacity-100' : 'text-gray-500 hover:text-gold hover:border-gold/50'}`}
                 >
-                  <ArrowRight size={12}/>
+                  <FolderInput size={11}/>
                 </button>
-                {addScenarioFor === asset.id && (
-                  <AddToScenarioPopover asset={asset} onClose={() => setAddScenarioFor(null)} />
-                )}
+                {/* Hide/unhide */}
+                <button
+                  onClick={() => toggleAssetHidden(asset.id, !asset.hidden)}
+                  title={asset.hidden ? 'Unhide track' : 'Hide track'}
+                  className={`opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded border border-border transition-all ${asset.hidden ? 'text-gold border-gold/50 opacity-100' : 'text-gray-500 hover:text-gold hover:border-gold/50'}`}
+                >
+                  {asset.hidden ? <Eye size={11}/> : <EyeOff size={11}/>}
+                </button>
+                {/* Add to scenario */}
+                <div className="relative">
+                  <button
+                    onClick={() => setAddScenarioFor(addScenarioFor === asset.id ? null : asset.id)}
+                    title="Add to current scenario"
+                    className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded border border-border text-gray-500 hover:text-gold hover:border-gold/50 transition-all"
+                  >
+                    <ArrowRight size={12}/>
+                  </button>
+                  {addScenarioFor === asset.id && (
+                    <AddToScenarioPopover asset={asset} onClose={() => setAddScenarioFor(null)} />
+                  )}
+                </div>
               </div>
             </div>
           )

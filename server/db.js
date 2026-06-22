@@ -101,5 +101,6 @@ migrate(`ALTER TABLE audio_assets ADD COLUMN artist TEXT`, 'audio_assets.artist'
 migrate(`ALTER TABLE audio_assets ADD COLUMN album TEXT`, 'audio_assets.album')
 migrate(`ALTER TABLE audio_assets ADD COLUMN cover_art_path TEXT`, 'audio_assets.cover_art_path')
 migrate(`ALTER TABLE audio_assets ADD COLUMN library_id TEXT REFERENCES music_libraries(id) ON DELETE SET NULL`, 'audio_assets.library_id')
+migrate(`ALTER TABLE audio_assets ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0`, 'audio_assets.hidden')
 
 export default db

@@ -4,6 +4,18 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-21 (session 25)
+
+### Added
+- **Subfolder scanning** — library scan now recurses into all subdirectories; tracks found in subfolders are registered with their relative path (e.g. `Ambience/Cave/track.mp3`) so they stream correctly.
+- **Hide tracks** — each track row now has a hide button (EyeOff icon, visible on hover). Hidden tracks disappear from the list; a toggle in the header reveals them at reduced opacity. State persists in the database via `audio_assets.hidden`.
+- **Show file path** — folder icon button on each track row reveals the full file path on disk inline below the track name.
+
+### Fixed
+- **Browse folder dialog appears behind browser** — switched from Shell.Application COM (no owner window support) back to Windows Forms with a hidden `TopMost` helper form as the dialog owner, forcing the picker above all other windows.
+
+---
+
 ## [Unreleased] — 2026-06-21 (session 24)
 
 ### Added

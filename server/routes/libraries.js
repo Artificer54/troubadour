@@ -61,13 +61,19 @@ router.post('/', (req, res) => {
 
 router.post('/browse-folder', (_req, res) => {
   const ps =
-    `$s = New-Object -ComObject Shell.Application; ` +
-    `$f = $s.BrowseForFolder(0, 'Select a music folder for Troubadour', 0, 0); ` +
-    `if ($f) { Write-Output $f.Self.Path }`
+    `Add-Type -AssemblyName System.Windows.Forms; ` +
+    `$h = New-Object System.Windows.Forms.Form; ` +
+    `$h.TopMost = $true; $h.StartPosition = 'Manual'; ` +
+    `$h.Location = New-Object System.Drawing.Point(0,0); ` +
+    `$h.Size = New-Object System.Drawing.Size(1,1); $h.Show(); ` +
+    `$d = New-Object System.Windows.Forms.FolderBrowserDialog; ` +
+    `$d.Description = 'Select a music folder for Troubadour'; ` +
+    `$d.ShowNewFolderButton = $true; ` +
+    `if ($d.ShowDialog($h) -eq 'OK') { Write-Output $d.SelectedPath }; ` +
+    `$h.Dispose()`
   exec(`powershell -NoProfile -NonInteractive -Command "${ps}"`, { timeout: 30000 }, (err, stdout) => {
     if (err) return res.json({ path: null })
-    const path = stdout.trim()
-    res.json({ path: path || null })
+    res.json({ path: stdout.trim() || null })
   })
 })
 
@@ -92,39 +98,47 @@ router.delete('/:id', (req, res) => {
   res.json({ ok: true })
 })
 
+async function walkDir(dir, root) {
+  const results = []
+  for (const entry of await readdir(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name)
+    if (entry.isDirectory()) {
+      results.push(...await walkDir(full, root))
+    } else if (AUDIO_EXTS.has(extname(entry.name).toLowerCase())) {
+      results.push({ fullPath: full, relativePath: full.slice(root.length + 1) })
+    }
+  }
+  return results
+}
+
 router.post('/:id/scan', async (req, res) => {
   const lib = db.prepare(`SELECT * FROM music_libraries WHERE id = ?`).get(req.params.id)
   if (!lib) return res.status(404).json({ error: 'Not found' })
   if (!existsSync(lib.path)) return res.status(400).json({ error: 'Library path no longer exists on disk' })
 
   try {
-    const files = await readdir(lib.path)
-    // Build set of already-registered (storage_path, library_id) pairs
+    const files = await walkDir(lib.path, lib.path)
+    // Build set of already-registered relative paths for this library
     const existingInLib = new Set(
       db.prepare(`SELECT storage_path FROM audio_assets WHERE library_id = ?`).all(lib.id).map(r => r.storage_path)
     )
-    // Also check for files registered in default tracks with the same hash (dedup)
     const existingHashes = new Set(db.prepare(`SELECT file_hash FROM audio_assets`).all().map(r => r.file_hash))
 
     let added = 0
-    for (const filename of files) {
-      if (existingInLib.has(filename)) continue
-      const ext = extname(filename).toLowerCase()
-      if (!AUDIO_EXTS.has(ext)) continue
-
-      const filePath = join(lib.path, filename)
-      const stats = await stat(filePath)
-      const name = filename.replace(/\.[^.]+$/, '')
-      const id = randomUUID()
-      const hashKey = `lib:${lib.id}:${filename}`
-
+    for (const { fullPath, relativePath } of files) {
+      if (existingInLib.has(relativePath)) continue
+      const hashKey = `lib:${lib.id}:${relativePath}`
       if (existingHashes.has(hashKey)) continue
 
-      const { artist, album, cover_art_path } = await extractMetadata(filePath, id)
+      const stats = await stat(fullPath)
+      const name = relativePath.replace(/\.[^.]+$/, '').replace(/[\\/]/g, ' — ')
+      const id = randomUUID()
+
+      const { artist, album, cover_art_path } = await extractMetadata(fullPath, id)
       db.prepare(`
         INSERT OR IGNORE INTO audio_assets (id, name, storage_path, file_hash, mime_type, file_size, artist, album, cover_art_path, library_id)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(id, name, filename, hashKey, 'audio/mpeg', stats.size, artist, album, cover_art_path, lib.id)
+      `).run(id, name, relativePath, hashKey, 'audio/mpeg', stats.size, artist, album, cover_art_path, lib.id)
       existingHashes.add(hashKey)
       added++
     }
