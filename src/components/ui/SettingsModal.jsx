@@ -71,7 +71,7 @@ export default function SettingsModal({ onClose }) {
   return (
     <Modal title="Settings" onClose={onClose} wide>
       {/* Tab bar */}
-      <div className="flex gap-1 mb-5 border-b border-border pb-3">
+      <div className="flex flex-wrap gap-1 mb-5 border-b border-border pb-3">
         {[
           { key: 'theme',      label: 'Theme',            icon: Palette },
           { key: 'intensity',  label: 'Intensity Colors', icon: Sliders },
@@ -299,9 +299,9 @@ export default function SettingsModal({ onClose }) {
 
       {/* ── Help & Setup tab ───────────────────────────────────── */}
       {tab === 'help' && (
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-3">
           {/* Sidebar nav */}
-          <div className="w-36 shrink-0 space-y-0.5">
+          <div className="sm:w-36 sm:shrink-0 flex flex-row flex-wrap sm:flex-col gap-1 sm:gap-0 sm:space-y-0.5">
             {[
               { key: 'overview',   label: 'Overview' },
               { key: 'selfhost',   label: 'Self-Hosting' },
@@ -312,7 +312,7 @@ export default function SettingsModal({ onClose }) {
               <button
                 key={key}
                 onClick={() => setHelpSection(key)}
-                className={`w-full text-left px-2.5 py-1.5 rounded text-xs transition-colors ${
+                className={`sm:w-full text-left px-2.5 py-1.5 rounded text-xs transition-colors ${
                   helpSection === key
                     ? 'bg-gold/15 text-gold font-medium'
                     : 'text-gray-400 hover:text-gray-200 hover:bg-border/40'

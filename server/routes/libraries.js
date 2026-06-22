@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto'
 import { readdir, stat } from 'fs/promises'
 import { existsSync } from 'fs'
 import { join, extname } from 'path'
+import { exec } from 'child_process'
 import db from '../db.js'
 import { COVERS_DIR } from '../paths.js'
 import { mkdir, writeFile } from 'fs/promises'
@@ -56,6 +57,20 @@ router.post('/', (req, res) => {
   db.prepare(`INSERT INTO music_libraries (id, name, path) VALUES (?, ?, ?)`).run(id, name.trim(), libPath.trim())
   const row = db.prepare(`SELECT * FROM music_libraries WHERE id = ?`).get(id)
   res.json(withAssetCount(row))
+})
+
+router.post('/browse-folder', (_req, res) => {
+  const ps =
+    `Add-Type -AssemblyName System.Windows.Forms; ` +
+    `$d = New-Object System.Windows.Forms.FolderBrowserDialog; ` +
+    `$d.Description = 'Select a music folder for Troubadour'; ` +
+    `$d.ShowNewFolderButton = $true; ` +
+    `if ($d.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { Write-Output $d.SelectedPath }`
+  exec(`powershell -NonInteractive -Command "${ps}"`, { timeout: 30000 }, (err, stdout) => {
+    if (err) return res.json({ path: null })
+    const path = stdout.trim()
+    res.json({ path: path || null })
+  })
 })
 
 router.put('/:id', (req, res) => {
