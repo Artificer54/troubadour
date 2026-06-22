@@ -4,6 +4,13 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-21 (session 22)
+
+### Added
+- **`npm run dev` auto-restarts Express** — replaced `node` with `nodemon` (watching `server/**/*.js`), so any change to a server file immediately restarts the API without touching the Vite dev server or HMR.
+
+---
+
 ## [Unreleased] — 2026-06-21 (session 21)
 
 ### Fixed
