@@ -1,11 +1,19 @@
-import { execSync } from 'child_process'
+import { execSync, spawn } from 'child_process'
+import { existsSync } from 'fs'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const ROOT = join(__dirname, '..')
+const DIST = join(ROOT, 'dist')
 
 const REPO = 'Artificer54/troubadour'
 const POLL_MINUTES = parseInt(process.env.UPDATE_POLL_MINUTES ?? '15', 10)
 const GITHUB_API = `https://api.github.com/repos/${REPO}/commits/main`
 
-// PM2 sets pm_id on managed processes; its absence means we're in dev mode
+// PM2 sets pm_id on managed processes; dist/ existing means we're serving a production build
 const isUnderPM2 = process.env.pm_id !== undefined
+const isProduction = isUnderPM2 || existsSync(DIST)
 
 let state = {
   currentSha: null,
@@ -68,14 +76,28 @@ export function applyUpdate() {
   console.log('[updater] Applying update...')
   execSync('git pull', { stdio: 'inherit' })
 
-  if (isUnderPM2) {
+  if (isProduction) {
     execSync('npm install --omit=dev', { stdio: 'inherit' })
     execSync('npm run build', { stdio: 'inherit' })
-    console.log('[updater] Update complete — restarting via PM2...')
-    process.exit(0)
+    console.log('[updater] Update complete — restarting...')
+
+    if (isUnderPM2) {
+      // PM2 will restart the process after exit
+      process.exit(0)
+    } else {
+      // Production without PM2: spawn a fresh server instance then exit
+      const child = spawn(process.execPath, ['server/index.js'], {
+        detached: true,
+        stdio: 'ignore',
+        cwd: ROOT,
+        env: process.env,
+      })
+      child.unref()
+      process.exit(0)
+    }
   } else {
-    // Dev mode: pull and install all deps (including devDeps for Vite), but
-    // don't build or exit — the user needs to restart their dev server manually.
+    // Dev mode (no dist/, no PM2): pull and install all deps but don't build or exit.
+    // User needs to restart their dev server manually.
     execSync('npm install', { stdio: 'inherit' })
     console.log('[updater] Dev mode: pulled latest. Restart your dev server to apply changes.')
     return { devMode: true }

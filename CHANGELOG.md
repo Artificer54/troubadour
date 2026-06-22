@@ -4,6 +4,17 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-21 (session 21)
+
+### Fixed
+- **Auto-updater now works in production without PM2** — previously, only PM2-managed processes got the full `git pull` + build + restart flow. Running the built app directly (`node server/index.js`) was incorrectly treated as dev mode. Now detects production by checking whether `dist/` exists: if so, does the full update and self-spawns a new process before exiting (works with or without PM2).
+- **Self-restart for standalone production** — when not under PM2, the updater now spawns `node server/index.js` detached before calling `process.exit(0)` so the server comes back up automatically without a process manager.
+
+### Added
+- **Vite binds to `0.0.0.0`** — dev server now listens on all interfaces, making it reachable over Tailscale for mobile testing. Access via `http://<tailscale-ip>:5173`.
+
+---
+
 ## [Unreleased] — 2026-06-21 (session 20)
 
 ### Fixed
