@@ -65,13 +65,6 @@ export default function EnvironmentsPanel() {
               onClick={() => setSelectedEnvId(env.id)}
               className="group flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-colors border-b border-border/50 hover:bg-panel/60"
             >
-              <div
-                className="shrink-0 w-2 h-2 rounded-full"
-                style={{
-                  backgroundColor: env.color,
-                  boxShadow: isActive ? `0 0 6px 2px ${env.color}80` : 'none',
-                }}
-              />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate text-gray-300">{env.name}</p>
                 <p className="text-[10px] text-gray-500">
@@ -93,16 +86,17 @@ export default function EnvironmentsPanel() {
 }
 
 function EnvironmentDetail({ environment, onBack, activeEnvironments }) {
-  const playlists            = useAppStore((s) => s.playlists)
-  const selectedScenarioId   = useAppStore((s) => s.selectedScenarioId)
-  const activeEnvironmentIds = useAppStore((s) => s.activeEnvironmentIds)
-  const activePresetIds      = useAppStore((s) => s.activePresetIds)
-  const activateEnvironment  = useAppStore((s) => s.activateEnvironment)
-  const deactivateEnvironment= useAppStore((s) => s.deactivateEnvironment)
-  const applyPreset          = useAppStore((s) => s.applyPreset)
-  const saveCurrentAsPreset  = useAppStore((s) => s.saveCurrentAsPreset)
-  const deletePreset         = useAppStore((s) => s.deletePreset)
-  const updatePreset         = useAppStore((s) => s.updatePreset)
+  const playlists              = useAppStore((s) => s.playlists)
+  const selectedScenarioId     = useAppStore((s) => s.selectedScenarioId)
+  const activeEnvironmentIds   = useAppStore((s) => s.activeEnvironmentIds)
+  const activePresetIds        = useAppStore((s) => s.activePresetIds)
+  const activateEnvironment    = useAppStore((s) => s.activateEnvironment)
+  const deactivateEnvironment  = useAppStore((s) => s.deactivateEnvironment)
+  const applyPreset            = useAppStore((s) => s.applyPreset)
+  const saveCurrentAsPreset    = useAppStore((s) => s.saveCurrentAsPreset)
+  const deletePreset           = useAppStore((s) => s.deletePreset)
+  const updatePreset           = useAppStore((s) => s.updatePreset)
+  const addTrackToEnvironment  = useAppStore((s) => s.addTrackToEnvironment)
 
   const [showEdit, setShowEdit]           = useState(false)
   const [showPresetInput, setShowPresetInput] = useState(false)
@@ -110,6 +104,7 @@ function EnvironmentDetail({ environment, onBack, activeEnvironments }) {
   const [savingPreset, setSavingPreset]   = useState(false)
   const [renamingPresetId, setRenamingPresetId] = useState(null)
   const [renameValue, setRenameValue]     = useState('')
+  const [dragOver, setDragOver]           = useState(false)
 
   const isActive = activeEnvironmentIds.includes(environment.id)
   const activePresetId = activePresetIds[environment.id]
@@ -186,14 +181,6 @@ function EnvironmentDetail({ environment, onBack, activeEnvironments }) {
           >
             <ChevronLeft size={16} />
           </button>
-
-          <div
-            className="w-2.5 h-2.5 rounded-full shrink-0"
-            style={{
-              backgroundColor: environment.color,
-              boxShadow: isActive ? `0 0 6px 2px ${environment.color}80` : 'none',
-            }}
-          />
 
           <span className="flex-1 text-sm font-medium text-gray-200 truncate min-w-0 font-fantasy">
             {environment.name}
@@ -307,7 +294,17 @@ function EnvironmentDetail({ environment, onBack, activeEnvironments }) {
         )}
 
         {/* Track rows — each track is its own mixer line */}
-        <div className={`flex-1 overflow-y-auto ${bgImage ? 'panel-frost' : ''}`}>
+        <div
+          className={`flex-1 overflow-y-auto transition-colors ${bgImage ? 'panel-frost' : ''} ${dragOver ? 'bg-gold/5 ring-1 ring-gold/30 ring-inset' : ''}`}
+          onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; setDragOver(true) }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(e) => {
+            e.preventDefault()
+            setDragOver(false)
+            const assetId = e.dataTransfer.getData('assetId')
+            if (assetId) addTrackToEnvironment(environment.id, assetId)
+          }}
+        >
           {hasTracks ? (
             <div className="flex flex-col divide-y divide-border/40">
               {environment.environment_tracks.map((track, index) => (
@@ -323,7 +320,7 @@ function EnvironmentDetail({ environment, onBack, activeEnvironments }) {
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-center gap-2 py-8">
               <p className="text-sm text-gray-500">No tracks yet</p>
-              <p className="text-xs text-gray-600">Click <Settings size={11} className="inline" /> to add looping tracks</p>
+              <p className="text-xs text-gray-600">Drag a track here or click <Settings size={11} className="inline" /> to add</p>
             </div>
           )}
         </div>

@@ -67,6 +67,16 @@ export function createAssetSlice(set, get) {
       set((s) => ({ audioAssets: s.audioAssets.map((a) => a.id === assetId ? { ...a, tags } : a) }))
     },
 
+    setAssetType: async (id, track_type) => {
+      const res = await api(`/api/assets/${id}/type`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ track_type }),
+      })
+      if (!res.ok) return
+      set((s) => ({ audioAssets: s.audioAssets.map((a) => a.id === id ? { ...a, track_type } : a) }))
+    },
+
     renameAsset: async (id, name) => {
       const res = await api(`/api/assets/${id}/name`, {
         method: 'PATCH',

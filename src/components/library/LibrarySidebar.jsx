@@ -130,6 +130,7 @@ export default function LibrarySidebar() {
   const removeTag = useAppStore((s) => s.removeTagFromAsset)
   const renameAsset = useAppStore((s) => s.renameAsset)
   const toggleAssetHidden = useAppStore((s) => s.toggleAssetHidden)
+  const setAssetType = useAppStore((s) => s.setAssetType)
   const setLibraryOpen = useAppStore((s) => s.setLibraryOpen)
   const playlistVolume = useAppStore((s) => s.playlistVolume)
   const addMusicLibrary = useAppStore((s) => s.addMusicLibrary)
@@ -461,6 +462,23 @@ export default function LibrarySidebar() {
               {asset.duration_sec && (
                 <span className="text-[10px] text-gray-600 shrink-0">{fmt(asset.duration_sec)}</span>
               )}
+
+              {/* Track type selector */}
+              <div className="shrink-0" onClick={e => e.stopPropagation()}>
+                <select
+                  value={asset.track_type ?? 'music'}
+                  onChange={e => setAssetType(asset.id, e.target.value)}
+                  className="input-dark text-[10px] px-1 py-0.5 rounded cursor-pointer"
+                  style={{
+                    color: asset.track_type === 'ambience' ? '#4ade80' : asset.track_type === 'sfx' ? '#38bdf8' : 'rgb(var(--color-ember))',
+                  }}
+                  title="Track type"
+                >
+                  <option value="music">Music</option>
+                  <option value="ambience">Ambience</option>
+                  <option value="sfx">SFX</option>
+                </select>
+              </div>
 
               {/* Action buttons */}
               <div className="shrink-0 flex items-center gap-0.5" onClick={e => e.stopPropagation()}>

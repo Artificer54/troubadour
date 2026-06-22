@@ -156,6 +156,15 @@ router.patch('/:id/name', (req, res) => {
   res.json({ ok: true })
 })
 
+router.patch('/:id/type', (req, res) => {
+  const { track_type } = req.body
+  if (!['music', 'ambience', 'sfx'].includes(track_type)) return res.status(400).json({ error: 'Invalid type' })
+  const asset = db.prepare(`SELECT id FROM audio_assets WHERE id = ?`).get(req.params.id)
+  if (!asset) return res.status(404).json({ error: 'Not found' })
+  db.prepare(`UPDATE audio_assets SET track_type = ? WHERE id = ?`).run(track_type, req.params.id)
+  res.json({ ok: true })
+})
+
 router.patch('/:id/hidden', (req, res) => {
   const asset = db.prepare(`SELECT id FROM audio_assets WHERE id = ?`).get(req.params.id)
   if (!asset) return res.status(404).json({ error: 'Not found' })

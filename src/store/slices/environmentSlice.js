@@ -121,6 +121,10 @@ export function createEnvironmentSlice(set, get) {
       const preset = env.environment_presets?.find(p => p.id === activePresetId)
 
       env.environment_tracks?.forEach(track => {
+        if (!track.audio_assets) {
+          console.warn('Environment track missing audio_assets, skipping:', track.id)
+          return
+        }
         let vol = (state._envTrackVolumes[track.id] ?? 1.0) * envVolume
         if (preset) {
           const presetTrack = preset.preset_tracks?.find(pt => pt.environment_track_id === track.id)

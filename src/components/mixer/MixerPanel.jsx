@@ -62,6 +62,8 @@ export default function MixerPanel({ activeEnvironments, hideEnvFaders }) {
   const setPlaylistVolume     = useAppStore((s) => s.setPlaylistVolume)
   const sfxVolume             = useAppStore((s) => s.sfxVolume)
   const setSfxVolume          = useAppStore((s) => s.setSfxVolume)
+  const environmentMasterVolume    = useAppStore((s) => s.environmentMasterVolume)
+  const setEnvironmentMasterVolume = useAppStore((s) => s.setEnvironmentMasterVolume)
   const _envTrackVolumes      = useAppStore((s) => s._envTrackVolumes)
   const setLiveTrackVolume    = useAppStore((s) => s.setLiveTrackVolume)
 
@@ -107,6 +109,16 @@ export default function MixerPanel({ activeEnvironments, hideEnvFaders }) {
           label="SFX"
           muted={sfxVolume === 0}
           onMuteToggle={() => handleMute(sfxVolume, setSfxVolume)}
+        />
+
+        {/* Ambience master — green */}
+        <VerticalSlider
+          value={environmentMasterVolume}
+          onChange={setEnvironmentMasterVolume}
+          color="#4ade80"
+          label="Ambience"
+          muted={environmentMasterVolume === 0}
+          onMuteToggle={() => handleMute(environmentMasterVolume, setEnvironmentMasterVolume)}
         />
 
         {/* Environment track sliders — one per track in each active environment */}

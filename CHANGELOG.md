@@ -4,6 +4,17 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-22 (session 33)
+
+### Fixed
+- **Environment audio now plays** — switched environment Howls from WebAudio (`html5: false`) to HTML5 audio (`html5: true`), which is more reliable for looping ambient streams; WebAudio was silently failing for many codec/file combinations.
+- **Removed colored dot from environment list and detail header** — the always-visible colored circle before environment names is gone from both the list view and the `< EnvName` detail header.
+
+### Added
+- **Master Ambience slider in Mixer** — a green "Ambience" vertical fader sits alongside Master / Music / SFX, controlling `environmentMasterVolume` which scales all active environment track volumes simultaneously. Infrastructure was already wired in `settingsSlice` and `audioEngine`.
+- **Drag tracks into Environments** — the environment detail track list is now a drop target; drag any track from the Library sidebar and drop it directly onto the environment to add it. Visual ring feedback appears on drag-over. Empty state hint updated to "Drag a track here or click ⚙ to add."
+- **Track type field in Library** — every library track row now shows a compact inline selector (Music / Ambience / SFX) with color-coded text (ember for music, green for ambience, sky-blue for SFX). Persisted via a new `track_type` column on `audio_assets` (DB migration added) and a `PATCH /api/assets/:id/type` endpoint.
+
 ## [Unreleased] — 2026-06-22 (session 32)
 
 ### Changed

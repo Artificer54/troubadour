@@ -166,10 +166,10 @@ class AudioEngine {
     const target = Math.max(0, Math.min(1, volume)) * this._environmentMasterVolume
     const howl = new Howl({
       src: [url],
-      html5: false,
+      html5: true,
       loop: true,
       volume: 0,
-      onloaderror: (id, err) => console.error('Environment track load error', err),
+      onloaderror: (id, err) => console.error(`[audioEngine] Environment track load error — url: ${url}`, err),
     })
     this._environmentHowls.set(trackId, { howl, targetVolume: volume })
     howl.play()
