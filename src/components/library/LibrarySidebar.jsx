@@ -206,9 +206,15 @@ export default function LibrarySidebar() {
 
   useEffect(() => () => stopLibraryPreview(), [])
 
-  // Auto-scan on open, then every 5 minutes
+  // Auto-scan once when libraries are first loaded, then every 5 minutes
+  const hasAutoScanned = useRef(false)
   useEffect(() => {
+    if (musicLibraries.length === 0 || hasAutoScanned.current) return
+    hasAutoScanned.current = true
     scanAllLibraries()
+  }, [musicLibraries])
+
+  useEffect(() => {
     const id = setInterval(scanAllLibraries, 5 * 60 * 1000)
     return () => clearInterval(id)
   }, [])

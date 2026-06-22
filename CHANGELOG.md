@@ -4,6 +4,13 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-22 (session 27)
+
+### Fixed
+- **Auto-scan timing bug** — `scanAllLibraries` was firing before `fetchMusicLibraries` completed, so `musicLibraries` was still `[]` and nothing got scanned. Now waits for the library list to be non-empty before running the first scan.
+
+---
+
 ## [Unreleased] — 2026-06-22 (session 26)
 
 ### Added
