@@ -4,6 +4,13 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-21 (session 23)
+
+### Fixed
+- **Vite blocks Tailscale hostname** — added `allowedHosts: 'all'` to vite.config.js so Vite accepts requests from any hostname (including Tailscale machine names like `word-engine`).
+
+---
+
 ## [Unreleased] — 2026-06-21 (session 22)
 
 ### Added

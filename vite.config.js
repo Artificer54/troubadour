@@ -6,6 +6,7 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
+    allowedHosts: 'all',
     // Dev proxy so relative /api calls reach Express on 3001
     proxy: {
       '/api': 'http://localhost:3001',
