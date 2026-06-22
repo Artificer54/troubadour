@@ -137,5 +137,9 @@ migrate(`ALTER TABLE audio_assets ADD COLUMN album TEXT`, 'audio_assets.album')
 migrate(`ALTER TABLE audio_assets ADD COLUMN cover_art_path TEXT`, 'audio_assets.cover_art_path')
 migrate(`ALTER TABLE audio_assets ADD COLUMN library_id TEXT REFERENCES music_libraries(id) ON DELETE SET NULL`, 'audio_assets.library_id')
 migrate(`ALTER TABLE audio_assets ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0`, 'audio_assets.hidden')
+migrate(`ALTER TABLE environments ADD COLUMN background_image TEXT`, 'environments.background_image')
+migrate(`ALTER TABLE environments ADD COLUMN background_image_original TEXT`, 'environments.background_image_original')
+migrate(`ALTER TABLE environments ADD COLUMN bg_blur INTEGER DEFAULT 12`, 'environments.bg_blur')
+migrate(`ALTER TABLE environments ADD COLUMN bg_darkness INTEGER DEFAULT 55`, 'environments.bg_darkness')
 
 export default db

@@ -4,6 +4,18 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-22 (session 31)
+
+### Changed
+- **Environments redesigned as mini-scenarios** — each environment is now a clickable row in the list; clicking opens a full detail view that takes over the right panel (like selecting a scenario in the sidebar).
+- **Track mixer rows** — inside an environment detail, each looping track has its own dedicated row with a volume slider, colored to match the environment's accent color.
+- **Presets as pill buttons** — presets are displayed as small pill buttons (like intensity tabs) always visible in the detail view; click to apply, double-click to rename, hover to delete.
+- **"Save as preset" always visible** — a `+ Save as preset` button is always present next to the preset pills; clicking it captures the current track volumes and prompts for a name inline.
+- **Environment background photo** — environments support a background image (with blur + darkness controls) just like scenarios. If no environment image is set, the currently selected scenario's image shows through instead. The photo layers behind the full mixer panel.
+- **Photo tab in Edit modal** — the Edit Environment modal gains a Photo tab for uploading/removing the background image with live blur and darkness preview.
+
+---
+
 ## [Unreleased] — 2026-06-22 (session 30)
 
 ### Added

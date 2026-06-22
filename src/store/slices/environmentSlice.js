@@ -218,6 +218,32 @@ export function createEnvironmentSlice(set, get) {
       })
     },
 
+    uploadEnvironmentImage: async (file, blur = 12, darkness = 55) => {
+      try {
+        const form = new FormData()
+        form.append('file', file)
+        form.append('blur', String(blur))
+        form.append('darkness', String(darkness))
+        const res = await fetch('/api/images/upload', { method: 'POST', body: form })
+        if (!res.ok) return null
+        const { filename, original } = await res.json()
+        return { filename, original }
+      } catch {
+        return null
+      }
+    },
+
+    reprocessEnvironmentBackground: async (environmentId, blur, darkness) => {
+      const res = await fetch(`/api/environments/${environmentId}/reprocess-bg`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ blur, darkness }),
+      })
+      if (!res.ok) return
+      const updated = await res.json()
+      set((s) => ({ environments: s.environments.map(e => e.id === environmentId ? updated : e) }))
+    },
+
     // Save current live state as a named preset
     saveCurrentAsPreset: async (environmentId, name, fadeDuration = 1500) => {
       const state = get()

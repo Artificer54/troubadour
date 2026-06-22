@@ -1,6 +1,11 @@
 import { Router } from 'express'
 import { randomUUID } from 'crypto'
+import { existsSync } from 'fs'
+import { copyFile } from 'fs/promises'
+import { join } from 'path'
+import sharp from 'sharp'
 import db from '../db.js'
+import { IMAGES_DIR } from '../paths.js'
 
 const router = Router()
 
@@ -62,14 +67,65 @@ router.post('/', (req, res) => {
   res.json(getEnvironmentsWithNested().find(e => e.id === id))
 })
 
-// Update environment (name / color)
+// Update environment (name / color / image)
 router.put('/:id', (req, res) => {
-  const { name, color } = req.body
+  const { name, color, background_image, background_image_original, bg_blur, bg_darkness } = req.body
   const env = db.prepare(`SELECT * FROM environments WHERE id = ?`).get(req.params.id)
   if (!env) return res.status(404).json({ error: 'Not found' })
-  db.prepare(`UPDATE environments SET name = ?, color = ? WHERE id = ?`)
-    .run(name ?? env.name, color ?? env.color, req.params.id)
+  db.prepare(`
+    UPDATE environments SET
+      name = ?, color = ?,
+      background_image = ?,
+      background_image_original = ?,
+      bg_blur = ?,
+      bg_darkness = ?
+    WHERE id = ?
+  `).run(
+    name ?? env.name,
+    color ?? env.color,
+    background_image !== undefined ? background_image : env.background_image,
+    background_image_original !== undefined ? background_image_original : env.background_image_original,
+    bg_blur !== undefined ? bg_blur : env.bg_blur,
+    bg_darkness !== undefined ? bg_darkness : env.bg_darkness,
+    req.params.id,
+  )
   res.json(getEnvironmentsWithNested().find(e => e.id === req.params.id))
+})
+
+// Reprocess environment background image with new blur
+router.post('/:id/reprocess-bg', async (req, res) => {
+  const { blur, darkness } = req.body
+  const env = db.prepare(`SELECT * FROM environments WHERE id = ?`).get(req.params.id)
+  if (!env) return res.status(404).json({ error: 'Not found' })
+
+  let origName = env.background_image_original
+  if (!origName) {
+    const current = env.background_image
+    if (!current) return res.status(400).json({ error: 'No image stored' })
+    const ext = current.match(/\.[^.]+$/)?.[0] ?? '.jpg'
+    const uuid = current.replace(/\.[^.]+$/, '')
+    origName = `${uuid}_orig${ext}`
+    const adoptSrc = join(IMAGES_DIR, current)
+    const adoptDest = join(IMAGES_DIR, origName)
+    if (!existsSync(adoptSrc)) return res.status(404).json({ error: 'Image file not found' })
+    await copyFile(adoptSrc, adoptDest)
+  }
+
+  const origPath = join(IMAGES_DIR, origName)
+  const bgName = origName.replace('_orig', '_bg').replace(/\.[^.]+$/, '.jpg')
+  const bgPath = join(IMAGES_DIR, bgName)
+  const sigma = Math.max(0.3, blur ?? 12)
+
+  try {
+    await sharp(origPath).blur(sigma).jpeg({ quality: 85 }).toFile(bgPath)
+    db.prepare(`
+      UPDATE environments SET background_image = ?, background_image_original = ?, bg_blur = ?, bg_darkness = ?
+      WHERE id = ?
+    `).run(bgName, origName, blur ?? 12, darkness ?? 55, req.params.id)
+    res.json(getEnvironmentsWithNested().find(e => e.id === req.params.id))
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
 })
 
 // Delete environment

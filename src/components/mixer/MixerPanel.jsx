@@ -55,7 +55,7 @@ function VerticalSlider({ value, onChange, color, label, muted, onMuteToggle }) 
   )
 }
 
-export default function MixerPanel({ activeEnvironments }) {
+export default function MixerPanel({ activeEnvironments, hideEnvFaders }) {
   const masterVolume          = useAppStore((s) => s.masterVolume)
   const setMasterVolume       = useAppStore((s) => s.setMasterVolume)
   const playlistVolume        = useAppStore((s) => s.playlistVolume)
@@ -128,7 +128,7 @@ export default function MixerPanel({ activeEnvironments }) {
         />
 
         {/* Environment sliders — one per active environment */}
-        {activeEnvironments?.length > 0 && (
+        {!hideEnvFaders && activeEnvironments?.length > 0 && (
           <>
             <div className="self-stretch w-px bg-border mx-1 shrink-0" />
             {activeEnvironments.map((env) => {
