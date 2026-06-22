@@ -1,6 +1,16 @@
 import { useState } from 'react'
-import { FolderOpen, Plus, Trash2, RefreshCw, ToggleLeft, ToggleRight, FolderSearch, X } from 'lucide-react'
+import { FolderOpen, Plus, Trash2, RefreshCw, ToggleLeft, ToggleRight, FolderSearch, X, FolderInput } from 'lucide-react'
 import { useAppStore } from '../../store/useAppStore'
+
+async function browseForFolder() {
+  try {
+    const res = await fetch('/api/libraries/browse-folder', { method: 'POST' })
+    const { path } = await res.json()
+    return path || null
+  } catch {
+    return null
+  }
+}
 
 export default function LibraryManager() {
   const musicLibraries     = useAppStore((s) => s.musicLibraries)
@@ -12,8 +22,16 @@ export default function LibraryManager() {
   const [showAdd, setShowAdd]   = useState(false)
   const [newName, setNewName]   = useState('')
   const [newPath, setNewPath]   = useState('')
+  const [browsing, setBrowsing] = useState(false)
   const [scanning, setScanning] = useState(null)
   const [scanResult, setScanResult] = useState({})
+
+  const handleBrowse = async () => {
+    setBrowsing(true)
+    const picked = await browseForFolder()
+    setBrowsing(false)
+    if (picked) setNewPath(picked)
+  }
 
   const handleAdd = async () => {
     if (!newName.trim() || !newPath.trim()) return
@@ -62,16 +80,27 @@ export default function LibraryManager() {
             placeholder="Display name (e.g. Fantasy Ambience)"
             className="input-dark w-full text-xs py-1.5"
           />
-          <input
-            type="text"
-            value={newPath}
-            onChange={e => setNewPath(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') handleAdd() }}
-            placeholder={`Folder path (e.g. C:\\Users\\You\\Music\\TTRPG)`}
-            className="input-dark w-full text-xs py-1.5 font-mono"
-          />
+          <div className="flex gap-1.5">
+            <input
+              type="text"
+              value={newPath}
+              onChange={e => setNewPath(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleAdd() }}
+              placeholder={`Folder path (e.g. C:\\Users\\You\\Music\\TTRPG)`}
+              className="input-dark flex-1 text-xs py-1.5 font-mono min-w-0"
+            />
+            <button
+              onClick={handleBrowse}
+              disabled={browsing}
+              title="Browse for folder"
+              className="flex items-center gap-1 px-2 py-1.5 rounded-lg border border-border text-xs text-gray-400 hover:text-gold hover:border-gold/50 transition-colors disabled:opacity-50 shrink-0"
+            >
+              <FolderInput size={13} />
+              {browsing ? '…' : 'Browse'}
+            </button>
+          </div>
           <p className="text-[10px] text-gray-600">
-            Enter the full absolute path to the folder on this PC.
+            Click Browse to open a folder picker, or type the full path manually.
           </p>
           <div className="flex gap-2">
             <button

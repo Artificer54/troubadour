@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { randomUUID } from 'crypto'
+import { execSync } from 'child_process'
 import { readdir, stat } from 'fs/promises'
 import { existsSync } from 'fs'
 import { join, extname } from 'path'
@@ -36,6 +37,18 @@ function withAssetCount(library) {
   const { count } = db.prepare(`SELECT COUNT(*) as count FROM audio_assets WHERE library_id = ?`).get(library.id)
   return { ...library, enabled: !!library.enabled, asset_count: count }
 }
+
+router.post('/browse-folder', (_req, res) => {
+  try {
+    const result = execSync(
+      `powershell -command "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.FolderBrowserDialog; $f.Description = 'Select music folder'; $null = $f.ShowDialog(); $f.SelectedPath"`,
+      { timeout: 60000 }
+    ).toString().trim()
+    res.json({ path: result || null })
+  } catch {
+    res.json({ path: null })
+  }
+})
 
 router.get('/', (_req, res) => {
   const rows = db.prepare(`SELECT * FROM music_libraries ORDER BY name`).all()

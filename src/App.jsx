@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Music, Zap, X, Settings } from 'lucide-react'
+import { Music, Zap, X, Settings, Library } from 'lucide-react'
 import { useAppStore, applyTheme, applyIntensityColors } from './store/useAppStore'
 import ScenarioSidebar from './components/scenario/ScenarioSidebar'
 import ScenarioControlPanel from './components/scenario/ScenarioControlPanel'
@@ -12,7 +12,8 @@ import UpdateBanner from './components/ui/UpdateBanner'
 
 const MOBILE_TABS = [
   { key: 'scenarios', label: 'Scenarios', icon: Music },
-  { key: 'sfx',      label: 'SFX',       icon: Zap },
+  { key: 'library',   label: 'Library',   icon: Library },
+  { key: 'sfx',       label: 'SFX',       icon: Zap },
 ]
 
 export default function App() {
@@ -25,9 +26,11 @@ export default function App() {
   const activeTheme     = useAppStore((s) => s.activeTheme)
   const playlists       = useAppStore((s) => s.playlists)
   const selectedId      = useAppStore((s) => s.selectedScenarioId)
+  const setSelectedScenario = useAppStore((s) => s.setSelectedScenario)
   const libraryOpen     = useAppStore((s) => s.libraryOpen)
 
   const [mobileTab, setMobileTab]   = useState('scenarios')
+  const [showScenarioPicker, setShowScenarioPicker] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [splashDone, setSplashDone] = useState(false)
 
@@ -124,25 +127,48 @@ export default function App() {
             {/* Mobile: tabbed */}
             <div className="md:hidden flex flex-col h-full">
               <div className="flex-1 overflow-hidden">
-                {mobileTab === 'scenarios' ? (
+                {mobileTab === 'scenarios' && (
                   <div className="flex h-full flex-col">
-                    <div className={`border-b border-border shrink-0 max-h-40 overflow-y-auto ${bgImage ? 'bg-midnight/60 bg-midnight/40' : ''}`}>
-                      <ScenarioSidebar />
+                    {/* Compact scenario picker strip */}
+                    <div className={`shrink-0 border-b border-border ${bgImage ? 'bg-midnight/60' : 'bg-midnight'}`}>
+                      <div className="flex items-center gap-2 px-3 py-2">
+                        <span className="text-[10px] text-gray-500 uppercase tracking-widest shrink-0">Scene</span>
+                        <div className="flex-1 overflow-x-auto scrollbar-hide">
+                          <div className="flex gap-1.5 w-max">
+                            {playlists.map((p) => (
+                              <button
+                                key={p.id}
+                                onClick={() => setSelectedScenario(p.id)}
+                                className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors border ${
+                                  p.id === selectedId
+                                    ? 'bg-gold/15 border-gold/50 text-gold'
+                                    : 'border-border text-gray-500 hover:text-gray-300 hover:border-gray-500'
+                                }`}
+                              >
+                                {p.name}
+                              </button>
+                            ))}
+                            {playlists.length === 0 && (
+                              <span className="text-xs text-gray-600 py-1">No scenarios yet</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     <div className="flex-1 overflow-hidden">
                       <ScenarioControlPanel />
                     </div>
                   </div>
-                ) : (
-                  <SfxMatrix />
                 )}
+                {mobileTab === 'library' && <LibrarySidebar />}
+                {mobileTab === 'sfx' && <SfxMatrix />}
               </div>
               <nav className={`flex border-t border-border shrink-0 ${bgImage ? 'bg-midnight/60 bg-midnight/40' : 'bg-midnight'}`}>
                 {MOBILE_TABS.map(({ key, label, icon: Icon }) => (
                   <button
                     key={key}
                     onClick={() => setMobileTab(key)}
-                    className={`flex-1 flex flex-col items-center py-2 gap-0.5 text-xs font-medium transition-colors ${
+                    className={`flex-1 flex flex-col items-center py-2.5 gap-0.5 text-xs font-medium transition-colors ${
                       mobileTab === key ? 'text-gold' : 'text-gray-500'
                     }`}
                   >

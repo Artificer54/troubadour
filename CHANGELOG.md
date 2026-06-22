@@ -4,6 +4,22 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-21 (session 17)
+
+### Added
+- **PWA manifest** (`public/manifest.json`) — enables true standalone app mode when added to home screen on Android/iOS; no browser chrome, full-screen experience.
+- **Mobile 3-tab navigation** — added a dedicated **Library** tab on mobile alongside Scenarios and SFX, each taking full viewport height.
+- **Mobile scenario picker strip** — replaced the cramped `max-h-40` ScenarioSidebar on mobile with a compact horizontally-scrollable pill row for switching scenes, giving the control panel full height.
+- **Add Library & Upload Tracks in Library sidebar** — action buttons at the bottom of the Library panel let users add a folder library or upload tracks directly, without opening Settings.
+- **Server-side folder picker** (`POST /api/libraries/browse-folder`) — opens a native Windows folder browser dialog on the server machine; populates the path field in both the Settings > Libraries form and the Library sidebar add-library form.
+- **Browse button in LibraryManager** — "Browse…" button next to the folder path input opens the native picker; falls back to manual typing on non-Windows or headless servers.
+
+### Changed
+- **`index.html`** — added PWA manifest link, theme-color meta, and Apple mobile web app meta tags.
+- **Updates help section** (Settings > Help & Setup > Updates) — now correctly describes the existing auto-update system with a prominent callout; manual commands kept as fallback.
+
+---
+
 ## [Unreleased] — 2026-06-21 (session 16)
 
 ### Added

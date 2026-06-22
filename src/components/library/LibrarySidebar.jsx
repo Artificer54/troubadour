@@ -1,7 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
-import { Search, Play, Pause, X, Plus, Music2, Tag, ArrowRight, ChevronLeft } from 'lucide-react'
+import { Search, Play, Pause, X, Plus, Music2, Tag, ArrowRight, ChevronLeft, FolderPlus, Upload, FolderInput, Loader } from 'lucide-react'
 import { useAppStore } from '../../store/useAppStore'
 import { previewEngine } from '../../lib/previewEngine'
+
+async function browseForFolder() {
+  try {
+    const res = await fetch('/api/libraries/browse-folder', { method: 'POST' })
+    const { path } = await res.json()
+    return path || null
+  } catch {
+    return null
+  }
+}
 
 const INTENSITY_NAMES = ['Calm', 'Tense', 'Intense', 'Frantic', 'Legendary']
 
@@ -130,6 +140,9 @@ export default function LibrarySidebar() {
   const removeTag = useAppStore((s) => s.removeTagFromAsset)
   const setLibraryOpen = useAppStore((s) => s.setLibraryOpen)
   const playlistVolume = useAppStore((s) => s.playlistVolume)
+  const addMusicLibrary = useAppStore((s) => s.addMusicLibrary)
+  const uploadAudio = useAppStore((s) => s.uploadAudio)
+  const fetchAudioAssets = useAppStore((s) => s.fetchAudioAssets)
 
   const [search, setSearch] = useState('')
   const [activeTags, setActiveTags] = useState([])
@@ -140,6 +153,43 @@ export default function LibrarySidebar() {
   const [duration, setDuration] = useState(0)
   const rafRef = useRef(null)
   const seekBarRef = useRef(null)
+  const uploadInputRef = useRef(null)
+
+  // Add Library inline form state
+  const [showAddLib, setShowAddLib] = useState(false)
+  const [libName, setLibName] = useState('')
+  const [libPath, setLibPath] = useState('')
+  const [libBrowsing, setLibBrowsing] = useState(false)
+  const [libAdding, setLibAdding] = useState(false)
+  const [uploading, setUploading] = useState(false)
+
+  const handleBrowseLib = async () => {
+    setLibBrowsing(true)
+    const picked = await browseForFolder()
+    setLibBrowsing(false)
+    if (picked) setLibPath(picked)
+  }
+
+  const handleAddLib = async () => {
+    if (!libName.trim() || !libPath.trim()) return
+    setLibAdding(true)
+    await addMusicLibrary(libName.trim(), libPath.trim())
+    setLibAdding(false)
+    setLibName('')
+    setLibPath('')
+    setShowAddLib(false)
+  }
+
+  const handleUploadFiles = async (files) => {
+    const audioFiles = [...files].filter(f => f.type.startsWith('audio/'))
+    if (!audioFiles.length) return
+    setUploading(true)
+    for (const file of audioFiles) {
+      await uploadAudio(file)
+    }
+    setUploading(false)
+    fetchAudioAssets()
+  }
 
   useEffect(() => { previewEngine.setVolume(playlistVolume) }, [playlistVolume])
 
@@ -359,9 +409,86 @@ export default function LibrarySidebar() {
         })}
       </div>
 
-      {/* Drag hint */}
-      <div className="shrink-0 px-4 py-2 border-t border-border/40">
-        <p className="text-[10px] text-gray-700 text-center">Drag a track onto the scenario playlist to add it</p>
+      {/* Footer: actions + drag hint */}
+      <div className="shrink-0 border-t border-border bg-midnight">
+        {/* Add Library form */}
+        {showAddLib && (
+          <div className="px-3 pt-3 pb-2 border-b border-border space-y-2">
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest">New Library</p>
+            <input
+              type="text"
+              value={libName}
+              onChange={e => setLibName(e.target.value)}
+              placeholder="Display name (e.g. Fantasy Ambience)"
+              className="input-dark w-full text-xs py-1.5"
+              autoFocus
+            />
+            <div className="flex gap-1.5">
+              <input
+                type="text"
+                value={libPath}
+                onChange={e => setLibPath(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleAddLib() }}
+                placeholder="Folder path…"
+                className="input-dark flex-1 text-xs py-1.5 font-mono min-w-0"
+              />
+              <button
+                onClick={handleBrowseLib}
+                disabled={libBrowsing}
+                title="Browse for folder"
+                className="flex items-center gap-1 px-2 py-1.5 rounded-lg border border-border text-xs text-gray-400 hover:text-gold hover:border-gold/50 transition-colors disabled:opacity-50 shrink-0"
+              >
+                <FolderInput size={12} />
+                {libBrowsing ? '…' : 'Browse'}
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleAddLib}
+                disabled={libAdding || !libName.trim() || !libPath.trim()}
+                className="px-3 py-1.5 bg-gold text-midnight text-xs font-semibold rounded-lg disabled:opacity-40"
+              >
+                {libAdding ? 'Adding…' : 'Add'}
+              </button>
+              <button
+                onClick={() => { setShowAddLib(false); setLibName(''); setLibPath('') }}
+                className="p-1.5 text-gray-500 hover:text-gray-300"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Action buttons row */}
+        <div className="flex items-center gap-1 px-3 py-2">
+          <button
+            onClick={() => setShowAddLib(v => !v)}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs border transition-colors ${
+              showAddLib ? 'border-gold/50 bg-gold/10 text-gold' : 'border-border text-gray-500 hover:text-gold hover:border-gold/30'
+            }`}
+          >
+            <FolderPlus size={12} />
+            Add Library
+          </button>
+          <button
+            onClick={() => uploadInputRef.current?.click()}
+            disabled={uploading}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs border border-border text-gray-500 hover:text-gold hover:border-gold/30 transition-colors disabled:opacity-50"
+          >
+            {uploading ? <Loader size={12} className="animate-spin" /> : <Upload size={12} />}
+            {uploading ? 'Uploading…' : 'Upload Tracks'}
+          </button>
+          <input
+            ref={uploadInputRef}
+            type="file"
+            accept="audio/*"
+            multiple
+            className="hidden"
+            onChange={e => handleUploadFiles(e.target.files)}
+          />
+          <p className="ml-auto text-[10px] text-gray-700 hidden sm:block">Drag tracks to add</p>
+        </div>
       </div>
     </div>
   )
