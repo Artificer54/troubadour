@@ -60,16 +60,20 @@ router.post('/', (req, res) => {
 })
 
 router.post('/browse-folder', (_req, res) => {
+  // Use OpenFileDialog as a folder picker — it uses the modern Win32 file picker
+  // which always appears on top, unlike FolderBrowserDialog.
+  // Setting FileName to a fake file + ValidateNames=false lets us navigate to a
+  // folder and click Open to select it; GetDirectoryName strips the fake filename.
   const ps =
     `Add-Type -AssemblyName System.Windows.Forms; ` +
     `$h = New-Object System.Windows.Forms.Form; ` +
-    `$h.TopMost = $true; $h.StartPosition = 'Manual'; ` +
-    `$h.Location = New-Object System.Drawing.Point(0,0); ` +
-    `$h.Size = New-Object System.Drawing.Size(1,1); $h.Show(); ` +
-    `$d = New-Object System.Windows.Forms.FolderBrowserDialog; ` +
-    `$d.Description = 'Select a music folder for Troubadour'; ` +
-    `$d.ShowNewFolderButton = $true; ` +
-    `if ($d.ShowDialog($h) -eq 'OK') { Write-Output $d.SelectedPath }; ` +
+    `$h.TopMost = $true; $h.Location = New-Object System.Drawing.Point(-32000,-32000); ` +
+    `$h.Size = New-Object System.Drawing.Size(1,1); $h.Show(); $h.Activate(); ` +
+    `$d = New-Object System.Windows.Forms.OpenFileDialog; ` +
+    `$d.Title = 'Select a music folder for Troubadour'; ` +
+    `$d.ValidateNames = $false; $d.CheckFileExists = $false; $d.CheckPathExists = $true; ` +
+    `$d.FileName = 'Folder Selection.'; ` +
+    `if ($d.ShowDialog($h) -eq 'OK') { Write-Output ([System.IO.Path]::GetDirectoryName($d.FileName)) }; ` +
     `$h.Dispose()`
   exec(`powershell -NoProfile -NonInteractive -Command "${ps}"`, { timeout: 30000 }, (err, stdout) => {
     if (err) return res.json({ path: null })
@@ -124,6 +128,17 @@ router.post('/:id/scan', async (req, res) => {
     )
     const existingHashes = new Set(db.prepare(`SELECT file_hash FROM audio_assets`).all().map(r => r.file_hash))
 
+    // Remove entries for files that no longer exist on disk
+    const registered = db.prepare(`SELECT id, storage_path FROM audio_assets WHERE library_id = ?`).all(lib.id)
+    let removed = 0
+    for (const asset of registered) {
+      if (!existsSync(join(lib.path, asset.storage_path))) {
+        db.prepare(`DELETE FROM audio_assets WHERE id = ?`).run(asset.id)
+        existingInLib.delete(asset.storage_path)
+        removed++
+      }
+    }
+
     let added = 0
     for (const { fullPath, relativePath } of files) {
       if (existingInLib.has(relativePath)) continue
@@ -150,7 +165,7 @@ router.post('/:id/scan', async (req, res) => {
       if (!tagMap[t.asset_id]) tagMap[t.asset_id] = []
       tagMap[t.asset_id].push(t.tag)
     }
-    res.json({ added, assets: allAssets.map(r => ({ ...r, tags: tagMap[r.id] ?? [] })) })
+    res.json({ added, removed, assets: allAssets.map(r => ({ ...r, tags: tagMap[r.id] ?? [] })) })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }

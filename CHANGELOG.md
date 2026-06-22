@@ -4,6 +4,17 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-22 (session 26)
+
+### Added
+- **Auto-scan on library open** — LibrarySidebar silently scans all enabled libraries when opened, and re-scans every 5 minutes. New files appear automatically without a manual "Scan" click.
+- **Deleted file cleanup on scan** — scan now removes DB entries for tracks whose files no longer exist on disk, so the library stays in sync with what's actually there.
+
+### Fixed
+- **Browse dialog appears on top** — switched to `OpenFileDialog` (the standard Windows file picker) configured as a folder selector. It reliably renders on top of all windows. Navigate to your folder and click Open to select it.
+
+---
+
 ## [Unreleased] — 2026-06-21 (session 25)
 
 ### Added

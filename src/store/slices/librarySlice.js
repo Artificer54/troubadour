@@ -54,9 +54,24 @@ export function createLibrarySlice(set, get) {
       }
       const { added, assets } = await res.json()
       set({ audioAssets: assets })
-      // Refresh library list to get updated asset_count
       get().fetchMusicLibraries()
       return added
+    },
+
+    // Silently scan all enabled libraries (used for auto-scan, no error banners)
+    scanAllLibraries: async () => {
+      const libs = get().musicLibraries.filter(l => l.enabled)
+      if (!libs.length) return
+      let anyChange = false
+      for (const lib of libs) {
+        try {
+          const res = await api(`/api/libraries/${lib.id}/scan`, { method: 'POST' })
+          if (!res.ok) continue
+          const { added, removed, assets } = await res.json()
+          if (added || removed) { set({ audioAssets: assets }); anyChange = true }
+        } catch { /* silent */ }
+      }
+      if (anyChange) get().fetchMusicLibraries()
     },
   }
 }

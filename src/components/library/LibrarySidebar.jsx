@@ -132,6 +132,7 @@ export default function LibrarySidebar() {
   const setLibraryOpen = useAppStore((s) => s.setLibraryOpen)
   const playlistVolume = useAppStore((s) => s.playlistVolume)
   const addMusicLibrary = useAppStore((s) => s.addMusicLibrary)
+  const scanAllLibraries = useAppStore((s) => s.scanAllLibraries)
   const uploadAudio = useAppStore((s) => s.uploadAudio)
   const fetchAudioAssets = useAppStore((s) => s.fetchAudioAssets)
   const musicLibraries = useAppStore((s) => s.musicLibraries)
@@ -204,6 +205,13 @@ export default function LibrarySidebar() {
   }, [libraryPreview.isPlaying])
 
   useEffect(() => () => stopLibraryPreview(), [])
+
+  // Auto-scan on open, then every 5 minutes
+  useEffect(() => {
+    scanAllLibraries()
+    const id = setInterval(scanAllLibraries, 5 * 60 * 1000)
+    return () => clearInterval(id)
+  }, [])
 
   const fmt = (s) => `${Math.floor(s / 60)}:${Math.floor(s % 60).toString().padStart(2, '0')}`
 
