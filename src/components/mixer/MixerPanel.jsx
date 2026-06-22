@@ -1,4 +1,4 @@
-import { useAppStore } from '../../store/useAppStore'
+import { useAppStore, ENV_COLORS } from '../../store/useAppStore'
 
 // Vertical slider using CSS transform trick for cross-browser support
 function VerticalSlider({ value, onChange, color, label, muted, onMuteToggle }) {
@@ -62,29 +62,11 @@ export default function MixerPanel({ activeEnvironments, hideEnvFaders }) {
   const setPlaylistVolume     = useAppStore((s) => s.setPlaylistVolume)
   const sfxVolume             = useAppStore((s) => s.sfxVolume)
   const setSfxVolume          = useAppStore((s) => s.setSfxVolume)
-  const environmentVolumes    = useAppStore((s) => s.environmentVolumes)
-  const setEnvironmentVolume  = useAppStore((s) => s.setEnvironmentVolume)
-  const reapplyEnvironmentVolume = useAppStore((s) => s.reapplyEnvironmentVolume)
+  const _envTrackVolumes      = useAppStore((s) => s._envTrackVolumes)
+  const setLiveTrackVolume    = useAppStore((s) => s.setLiveTrackVolume)
 
-  // Mute state (stored locally — mute = set slider visual to 0 without losing value)
-  // We track muted state by checking if volume is 0
-  // Mute toggles set to 0 / restore previous
-  const handleMute = (current, setter, threshold = 0.01) => {
-    if (current > threshold) {
-      setter(0)
-    } else {
-      setter(0.8) // restore to a sensible default
-    }
-  }
-
-  const handleEnvVolumeChange = (envId, v) => {
-    setEnvironmentVolume(envId, v)
-    reapplyEnvironmentVolume(envId)
-  }
-
-  const handleEnvMute = (envId, currentVol) => {
-    const next = currentVol > 0.01 ? 0 : 0.8
-    handleEnvVolumeChange(envId, next)
+  const handleMute = (current, setter) => {
+    setter(current > 0.01 ? 0 : 0.8)
   }
 
   return (
@@ -127,24 +109,28 @@ export default function MixerPanel({ activeEnvironments, hideEnvFaders }) {
           onMuteToggle={() => handleMute(sfxVolume, setSfxVolume)}
         />
 
-        {/* Environment sliders — one per active environment */}
+        {/* Environment track sliders — one per track in each active environment */}
         {!hideEnvFaders && activeEnvironments?.length > 0 && (
           <>
             <div className="self-stretch w-px bg-border mx-1 shrink-0" />
-            {activeEnvironments.map((env) => {
-              const vol = environmentVolumes[env.id] ?? 1.0
-              return (
-                <VerticalSlider
-                  key={env.id}
-                  value={vol}
-                  onChange={(v) => handleEnvVolumeChange(env.id, v)}
-                  color={env.color}
-                  label={env.name}
-                  muted={vol === 0}
-                  onMuteToggle={() => handleEnvMute(env.id, vol)}
-                />
-              )
-            })}
+            {activeEnvironments.map((env) => (
+              (env.environment_tracks ?? []).map((track, trackIdx) => {
+                const vol = _envTrackVolumes[track.id] ?? 1.0
+                const color = ENV_COLORS[trackIdx % ENV_COLORS.length]
+                const shortName = (track.audio_assets?.name ?? 'Trk').slice(0, 6)
+                return (
+                  <VerticalSlider
+                    key={track.id}
+                    value={vol}
+                    onChange={(v) => setLiveTrackVolume(env.id, track.id, v)}
+                    color={color}
+                    label={shortName}
+                    muted={vol === 0}
+                    onMuteToggle={() => setLiveTrackVolume(env.id, track.id, vol > 0.01 ? 0 : 0.8)}
+                  />
+                )
+              })
+            ))}
           </>
         )}
       </div>

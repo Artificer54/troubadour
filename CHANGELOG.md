@@ -4,6 +4,17 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-22 (session 32)
+
+### Changed
+- **Mixer shows per-track sliders** — when an environment is active, the mixer displays one vertical fader per audio track (not per environment), each auto-colored by track index using the ENV_COLORS palette.
+- **Track rows styled like mixer** — environment track rows now show a styled horizontal slider with a glowing mute dot, matching the mixer aesthetic.
+- **Auto-color by track index** — tracks in the environment detail and mixer no longer share a single environment color; each track gets its own color automatically.
+- **No color picker when creating environments** — color is auto-assigned; the "New Environment" modal now opens with a name field and photo upload instead.
+- **Photo upload at environment creation** — the "New Environment" modal includes a drag/drop image zone with blur and darkness sliders.
+- **Darker mixer background in environment detail** — when a background image is set, the mixer pane uses `bg-midnight/90` for stronger contrast vs. the image behind the rest of the panel.
+- **Removed color picker from Edit modal** — environment color is now auto-assigned and no longer editable in the settings modal.
+
 ## [Unreleased] — 2026-06-22 (session 31)
 
 ### Changed

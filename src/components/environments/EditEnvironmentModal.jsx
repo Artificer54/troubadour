@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
-import { X, Search, Plus, Trash2, Upload, Image } from 'lucide-react'
-import { useAppStore, ENV_COLORS } from '../../store/useAppStore'
+import { X, Search, Plus, Trash2, Image } from 'lucide-react'
+import { useAppStore } from '../../store/useAppStore'
 
 export default function EditEnvironmentModal({ environment, onClose }) {
   const audioAssets                    = useAppStore((s) => s.audioAssets)
@@ -13,7 +13,6 @@ export default function EditEnvironmentModal({ environment, onClose }) {
   const reprocessEnvironmentBackground = useAppStore((s) => s.reprocessEnvironmentBackground)
 
   const [name, setName]     = useState(environment.name)
-  const [color, setColor]   = useState(environment.color)
   const [search, setSearch] = useState('')
   const [busy, setBusy]     = useState(false)
   const [tab, setTab]       = useState('tracks') // 'tracks' | 'presets' | 'image'
@@ -52,7 +51,7 @@ export default function EditEnvironmentModal({ environment, onClose }) {
     setBusy(true)
     setImageError(null)
 
-    const fields = { name, color }
+    const fields = { name }
     const hasExistingImage = !!environment.background_image
 
     if (bgImageFile) {
@@ -98,37 +97,16 @@ export default function EditEnvironmentModal({ environment, onClose }) {
       <div className="panel-card w-full max-w-lg flex flex-col gap-0 overflow-hidden" style={{ maxHeight: '85vh' }}>
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
-          <div className="flex items-center gap-3">
-            <input
-              type="color"
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
-              className="w-8 h-8 rounded-lg border border-border bg-midnight cursor-pointer p-0.5 shrink-0"
-            />
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="input-dark text-sm font-semibold bg-transparent border-transparent focus:border-gold px-0"
-              placeholder="Environment name"
-            />
-          </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 transition-colors">
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="input-dark text-sm font-semibold bg-transparent border-transparent focus:border-gold px-0 flex-1"
+            placeholder="Environment name"
+          />
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 transition-colors ml-3">
             <X size={16} />
           </button>
-        </div>
-
-        {/* Color palette */}
-        <div className="flex gap-2 px-5 py-2 border-b border-border flex-wrap shrink-0">
-          {ENV_COLORS.map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => setColor(c)}
-              className="w-5 h-5 rounded-full border-2 transition-all"
-              style={{ backgroundColor: c, borderColor: color === c ? 'white' : 'transparent' }}
-            />
-          ))}
         </div>
 
         {/* Tabs */}

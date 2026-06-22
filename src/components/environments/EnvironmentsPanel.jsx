@@ -173,7 +173,7 @@ function EnvironmentDetail({ environment, onBack, activeEnvironments }) {
 
       <div className="relative z-10 flex flex-col h-full overflow-hidden">
         {/* Compact mixer — Master/Music/SFX only */}
-        <div className={bgImage ? 'panel-frost' : ''}>
+        <div className={bgImage ? 'bg-midnight/90 backdrop-blur-sm border-b border-border/60' : ''}>
           <MixerPanel activeEnvironments={activeEnvironments} hideEnvFaders />
         </div>
 
@@ -310,13 +310,13 @@ function EnvironmentDetail({ environment, onBack, activeEnvironments }) {
         <div className={`flex-1 overflow-y-auto ${bgImage ? 'panel-frost' : ''}`}>
           {hasTracks ? (
             <div className="flex flex-col divide-y divide-border/40">
-              {environment.environment_tracks.map(track => (
+              {environment.environment_tracks.map((track, index) => (
                 <EnvironmentTrackRow
                   key={track.id}
                   environmentId={environment.id}
                   track={track}
                   isEnvActive={isActive}
-                  envColor={environment.color}
+                  trackIndex={index}
                 />
               ))}
             </div>
