@@ -1,17 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
-import { Search, Play, Pause, X, Plus, Music2, Tag, ArrowRight, ChevronLeft, FolderPlus, Upload, FolderInput, Loader } from 'lucide-react'
+import { Search, Play, Pause, X, Plus, Music2, Tag, ArrowRight, ChevronLeft, FolderPlus, Upload, Loader } from 'lucide-react'
 import { useAppStore } from '../../store/useAppStore'
 import { previewEngine } from '../../lib/previewEngine'
-
-async function browseForFolder() {
-  try {
-    const res = await fetch('/api/libraries/browse-folder', { method: 'POST' })
-    const { path } = await res.json()
-    return path || null
-  } catch {
-    return null
-  }
-}
 
 const INTENSITY_NAMES = ['Calm', 'Tense', 'Intense', 'Frantic', 'Legendary']
 
@@ -159,16 +149,8 @@ export default function LibrarySidebar() {
   const [showAddLib, setShowAddLib] = useState(false)
   const [libName, setLibName] = useState('')
   const [libPath, setLibPath] = useState('')
-  const [libBrowsing, setLibBrowsing] = useState(false)
   const [libAdding, setLibAdding] = useState(false)
   const [uploading, setUploading] = useState(false)
-
-  const handleBrowseLib = async () => {
-    setLibBrowsing(true)
-    const picked = await browseForFolder()
-    setLibBrowsing(false)
-    if (picked) setLibPath(picked)
-  }
 
   const handleAddLib = async () => {
     if (!libName.trim() || !libPath.trim()) return
@@ -423,25 +405,14 @@ export default function LibrarySidebar() {
               className="input-dark w-full text-xs py-1.5"
               autoFocus
             />
-            <div className="flex gap-1.5">
-              <input
-                type="text"
-                value={libPath}
-                onChange={e => setLibPath(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') handleAddLib() }}
-                placeholder="Folder path…"
-                className="input-dark flex-1 text-xs py-1.5 font-mono min-w-0"
-              />
-              <button
-                onClick={handleBrowseLib}
-                disabled={libBrowsing}
-                title="Browse for folder"
-                className="flex items-center gap-1 px-2 py-1.5 rounded-lg border border-border text-xs text-gray-400 hover:text-gold hover:border-gold/50 transition-colors disabled:opacity-50 shrink-0"
-              >
-                <FolderInput size={12} />
-                {libBrowsing ? '…' : 'Browse'}
-              </button>
-            </div>
+            <input
+              type="text"
+              value={libPath}
+              onChange={e => setLibPath(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleAddLib() }}
+              placeholder="Folder path (e.g. C:\Music\Ambience)"
+              className="input-dark w-full text-xs py-1.5 font-mono"
+            />
             <div className="flex gap-2">
               <button
                 onClick={handleAddLib}

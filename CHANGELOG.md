@@ -4,6 +4,17 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-21 (session 19)
+
+### Fixed
+- **Browse folder crashes server** — removed the `/api/libraries/browse-folder` endpoint entirely. It ran a PowerShell WinForms dialog on the server process which hangs indefinitely in headless/service contexts, making the app unreachable. The folder path field is now a plain text input; users paste or type the path directly.
+- **Modal overflow on mobile** — `CreatePlaylistModal` (and all modals) were clipped on small screens. Added `max-h-[90vh] overflow-y-auto` so modal content scrolls instead of being cut off.
+
+### Added
+- **Mobile "New Scenario" button** — the `+ New` button on the mobile Scenarios tab was already wired up; the modal is now scrollable so it's fully usable on phones.
+
+---
+
 ## [Unreleased] — 2026-06-21 (session 18)
 
 ### Added
