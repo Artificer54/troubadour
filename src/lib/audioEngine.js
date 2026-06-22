@@ -15,6 +15,9 @@ class AudioEngine {
     this._onTrackEndCb = null
     this._cleanupSeq = 0          // guards stale crossfade cleanup callbacks
     this._pauseFaded = false
+    // Environment looping tracks: Map<trackId, { howl, targetVolume }>
+    this._environmentHowls = new Map()
+    this._environmentMasterVolume = 1.0
     Howler.volume(1)
   }
 
@@ -154,6 +157,75 @@ class AudioEngine {
 
   setSfxVolume(v) {
     this._sfxVolume = Math.max(0, Math.min(1, v))
+  }
+
+  // ── Environment (looping ambient layers) ────────────────────
+
+  startEnvironmentTrack(url, trackId, volume = 1.0, fadeDuration = 1200) {
+    if (this._environmentHowls.has(trackId)) return
+    const target = Math.max(0, Math.min(1, volume)) * this._environmentMasterVolume
+    const howl = new Howl({
+      src: [url],
+      html5: false,
+      loop: true,
+      volume: 0,
+      onloaderror: (id, err) => console.error('Environment track load error', err),
+    })
+    this._environmentHowls.set(trackId, { howl, targetVolume: volume })
+    howl.play()
+    howl.fade(0, target, fadeDuration)
+  }
+
+  stopEnvironmentTrack(trackId, fadeDuration = 1200) {
+    const entry = this._environmentHowls.get(trackId)
+    if (!entry) return
+    this._environmentHowls.delete(trackId)
+    entry.howl.fade(entry.howl.volume(), 0, fadeDuration)
+    setTimeout(() => { try { entry.howl.stop(); entry.howl.unload() } catch (_) {} }, fadeDuration + 100)
+  }
+
+  stopAllEnvironmentTracks(fadeDuration = 1200) {
+    for (const trackId of this._environmentHowls.keys()) {
+      this.stopEnvironmentTrack(trackId, fadeDuration)
+    }
+  }
+
+  setEnvironmentTrackVolume(trackId, volume) {
+    const entry = this._environmentHowls.get(trackId)
+    if (!entry) return
+    entry.targetVolume = Math.max(0, Math.min(1, volume))
+    entry.howl.volume(entry.targetVolume * this._environmentMasterVolume)
+  }
+
+  setEnvironmentMasterVolume(v) {
+    this._environmentMasterVolume = Math.max(0, Math.min(1, v))
+    for (const entry of this._environmentHowls.values()) {
+      entry.howl.volume(entry.targetVolume * this._environmentMasterVolume)
+    }
+  }
+
+  // Crossfade between presets: fade out tracks not in next set, fade in new ones
+  applyEnvironmentPreset(environmentTrackIds, volumes, fadeDuration = 1500) {
+    const nextSet = new Set(environmentTrackIds)
+
+    // Stop tracks not in next preset
+    for (const trackId of this._environmentHowls.keys()) {
+      if (!nextSet.has(trackId)) {
+        this.stopEnvironmentTrack(trackId, fadeDuration)
+      }
+    }
+
+    // Update volumes for already-playing tracks; they'll be started by the store if not yet playing
+    for (let i = 0; i < environmentTrackIds.length; i++) {
+      const trackId = environmentTrackIds[i]
+      const vol = volumes[i] ?? 1.0
+      const entry = this._environmentHowls.get(trackId)
+      if (entry) {
+        entry.targetVolume = Math.max(0, Math.min(1, vol))
+        const target = entry.targetVolume * this._environmentMasterVolume
+        entry.howl.fade(entry.howl.volume(), target, fadeDuration)
+      }
+    }
   }
 }
 

@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
-import { Play, Pause, SkipForward, Square, Music2, Plus, Trash2, Loader, Pencil, Pin } from 'lucide-react'
+import { Play, Pause, SkipForward, Square, Music2, Plus, Trash2, Loader, Pencil, Pin, Zap, ChevronDown, ChevronUp } from 'lucide-react'
 import { useAppStore } from '../../store/useAppStore'
 import ScenarioDisk from '../ui/ScenarioDisk'
 import AdvancedControls from '../ui/AdvancedControls'
 import AddTrackModal from '../playlist/AddTrackModal'
 import EditScenarioModal from './EditScenarioModal'
 import VolumeSlider from '../ui/VolumeSlider'
+import SfxMatrix from '../sfx/SfxMatrix'
 import { audioEngine } from '../../lib/audioEngine'
 
 const INTENSITY_LABELS = ['Calm', 'Tense', 'Intense', 'Frantic', 'Legendary']
@@ -405,6 +406,7 @@ export default function ScenarioControlPanel() {
           </div>
 
           <AdvancedControls />
+          <SfxSection />
         </div>
       </div>
 
@@ -421,6 +423,29 @@ export default function ScenarioControlPanel() {
           scenario={scenario}
           onClose={() => setEditingScenario(false)}
         />
+      )}
+    </div>
+  )
+}
+
+function SfxSection() {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="panel-card overflow-hidden">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-border/30 transition-colors"
+      >
+        <div className="flex items-center gap-2 text-xs font-medium text-gray-400">
+          <Zap size={13} />
+          Sound Effects
+        </div>
+        {open ? <ChevronUp size={13} className="text-gray-500" /> : <ChevronDown size={13} className="text-gray-500" />}
+      </button>
+      {open && (
+        <div className="border-t border-border" style={{ height: 420 }}>
+          <SfxMatrix />
+        </div>
       )}
     </div>
   )

@@ -5,6 +5,7 @@ import { createPlaylistSlice } from './slices/playlistSlice'
 import { createAssetSlice } from './slices/assetSlice'
 import { createSfxSlice } from './slices/sfxSlice'
 import { createLibrarySlice } from './slices/librarySlice'
+import { createEnvironmentSlice } from './slices/environmentSlice'
 
 // Re-export theme helpers so existing component imports keep working
 export {
@@ -14,6 +15,7 @@ export {
   DEFAULT_CUSTOM_COLORS,
   PRESET_THEMES,
   THEMES,
+  ENV_COLORS,
   applyIntensityColors,
   applyTheme,
 } from './theme'
@@ -30,4 +32,5 @@ export const useAppStore = create((set, get) => ({
   ...createAssetSlice(set, get),
   ...createSfxSlice(set, get),
   ...createLibrarySlice(set, get),
+  ...createEnvironmentSlice(set, get),
 }))

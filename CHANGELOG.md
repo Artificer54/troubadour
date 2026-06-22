@@ -4,6 +4,23 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-22 (session 30)
+
+### Added
+- **Environments** — new ambient audio layer that loops continuously alongside scenarios and SFX. Create named environments, assign looping tracks, and control per-track volume live.
+- **Presets** — each environment supports named presets (e.g. "Light Rain", "Heavy Storm") that crossfade between active track states. Fade duration is configurable per preset.
+- **Mixer panel** — right panel now shows a full vertical mixer: Master, Music, and SFX sliders plus a per-environment fader for every active environment. Sliders are color-coded using the active theme palette.
+- **Environments right panel** — replaces the old SFX right column on desktop with the mixer + environments UI.
+- **SFX collapsible section** — SFX panel now lives under a collapsible "Sound Effects" drawer at the bottom of the center scenario panel on desktop. SFX remains a dedicated tab on mobile.
+- **4-tab mobile layout** — mobile nav adds an "Ambient" tab for the environments panel; SFX retains its own tab.
+- **Master volume** — global `Howler.volume()` master fader wired to the mixer.
+
+### Changed
+- Desktop right column now shows EnvironmentsPanel instead of SfxMatrix.
+- Mobile tab order: Scenes | Library | Ambient | SFX.
+
+---
+
 ## [Unreleased] — 2026-06-22 (session 29)
 
 ### Fixed

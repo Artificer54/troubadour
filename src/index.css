@@ -214,3 +214,34 @@
 .splash-disk {
   animation: spin-disk 4s linear infinite;
 }
+
+/* ── Vertical slider (MixerPanel) ──────────────────────────── */
+.vertical-slider::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: rgb(var(--color-border));
+}
+.vertical-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--slider-color, rgb(var(--color-accent)));
+  margin-top: -5px;
+  box-shadow: 0 0 4px var(--slider-color, rgb(var(--color-accent)));
+  cursor: pointer;
+}
+.vertical-slider::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: rgb(var(--color-border));
+}
+.vertical-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: none;
+  background: var(--slider-color, rgb(var(--color-accent)));
+  cursor: pointer;
+}

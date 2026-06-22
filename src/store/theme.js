@@ -10,6 +10,18 @@ export function rgbArrayToHex([r, g, b]) {
   return '#' + [r, g, b].map((v) => Math.round(v).toString(16).padStart(2, '0')).join('')
 }
 
+// ── Environment palette (cycled when creating new environments) ─
+export const ENV_COLORS = [
+  '#7c9885', // sage green
+  '#7b8fa1', // slate blue
+  '#a18f6f', // warm sand
+  '#9b7ea1', // dusty purple
+  '#7a9e9f', // teal
+  '#a17a7a', // muted rose
+  '#8f9e7a', // olive
+  '#7a8fa1', // steel blue
+]
+
 // ── Intensity colors ───────────────────────────────────────────
 export const DEFAULT_INTENSITY_COLORS = ['#60a5fa', '#facc15', '#fb923c', '#f87171', '#c084fc']
 

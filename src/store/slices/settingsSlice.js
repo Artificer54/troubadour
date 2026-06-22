@@ -1,3 +1,4 @@
+import { Howler } from 'howler'
 import { storage } from '../../lib/storage'
 import { audioEngine } from '../../lib/audioEngine'
 import {
@@ -10,10 +11,26 @@ import {
 export function createSettingsSlice(set, get) {
   return {
     // Volume
+    masterVolume: 1.0,
     playlistVolume: 0.8,
     sfxVolume: 0.9,
+    environmentMasterVolume: 1.0,
+    environmentVolumes: {},       // { environmentId: 0-1 }
+    setMasterVolume: (v) => {
+      const clamped = Math.max(0, Math.min(1, v))
+      Howler.volume(clamped)
+      set({ masterVolume: clamped })
+    },
     setPlaylistVolume: (v) => { audioEngine.setPlaylistVolume(v); set({ playlistVolume: v }) },
     setSfxVolume: (v) => { audioEngine.setSfxVolume(v); set({ sfxVolume: v }) },
+    setEnvironmentMasterVolume: (v) => {
+      audioEngine.setEnvironmentMasterVolume(v)
+      set({ environmentMasterVolume: v })
+    },
+    setEnvironmentVolume: (environmentId, v) => {
+      set((s) => ({ environmentVolumes: { ...s.environmentVolumes, [environmentId]: v } }))
+      // The environment slice will re-apply volumes to active tracks
+    },
 
     // Audio settings
     fadeDuration: 1500,

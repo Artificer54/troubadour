@@ -1,19 +1,22 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Music, Zap, X, Settings, Library, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react'
+import { Music, Zap, X, Settings, Library, RefreshCw, CheckCircle, AlertCircle, Plus, Layers } from 'lucide-react'
 import { useAppStore, applyTheme, applyIntensityColors } from './store/useAppStore'
 import ScenarioSidebar from './components/scenario/ScenarioSidebar'
 import ScenarioControlPanel from './components/scenario/ScenarioControlPanel'
 import LibrarySidebar from './components/library/LibrarySidebar'
 import SfxMatrix from './components/sfx/SfxMatrix'
+import EnvironmentsPanel from './components/environments/EnvironmentsPanel'
 import SettingsModal from './components/ui/SettingsModal'
 import SplashScreen from './components/ui/SplashScreen'
 import NetworkStatusIcon from './components/ui/NetworkStatusIcon'
 import UpdateBanner from './components/ui/UpdateBanner'
+import CreatePlaylistModal from './components/playlist/CreatePlaylistModal'
 
 const MOBILE_TABS = [
-  { key: 'scenarios', label: 'Scenarios', icon: Music },
-  { key: 'library',   label: 'Library',   icon: Library },
-  { key: 'sfx',       label: 'SFX',       icon: Zap },
+  { key: 'scenarios',    label: 'Scenes',  icon: Music },
+  { key: 'library',      label: 'Library', icon: Library },
+  { key: 'environments', label: 'Ambient', icon: Layers },
+  { key: 'sfx',          label: 'SFX',     icon: Zap },
 ]
 
 export default function App() {
@@ -32,6 +35,7 @@ export default function App() {
   const [mobileTab, setMobileTab]   = useState('scenarios')
   const [showScenarioPicker, setShowScenarioPicker] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [showMobileCreate, setShowMobileCreate] = useState(false)
   const [splashDone, setSplashDone] = useState(false)
 
   const [updateStatus, setUpdateStatus] = useState(null) // null | { updateAvailable, lastChecked, error }
@@ -72,7 +76,8 @@ export default function App() {
     applyIntensityColors(state.intensityColors)
   }, [activeTheme])
 
-  const fetchMusicLibraries = useAppStore((s) => s.fetchMusicLibraries)
+  const fetchMusicLibraries  = useAppStore((s) => s.fetchMusicLibraries)
+  const fetchEnvironments    = useAppStore((s) => s.fetchEnvironments)
 
   useEffect(() => {
     fetchPlaylists()
@@ -80,6 +85,7 @@ export default function App() {
     fetchSfxPanels()
     fetchSfxButtons()
     fetchMusicLibraries()
+    fetchEnvironments()
   }, [])
 
   return (
@@ -166,7 +172,7 @@ export default function App() {
                 <ScenarioControlPanel />
               </div>
               <div className={`w-80 lg:w-96 xl:w-[420px] shrink-0 flex flex-col overflow-hidden ${bgImage ? 'bg-midnight/60 bg-midnight/40' : ''}`}>
-                <SfxMatrix />
+                <EnvironmentsPanel />
               </div>
             </div>
 
@@ -199,6 +205,14 @@ export default function App() {
                             )}
                           </div>
                         </div>
+                        <button
+                          onClick={() => setShowMobileCreate(true)}
+                          title="New Scenario"
+                          className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-md bg-gold/10 hover:bg-gold/20 text-gold text-xs font-medium transition-colors"
+                        >
+                          <Plus size={12} />
+                          New
+                        </button>
                       </div>
                     </div>
                     <div className="flex-1 overflow-hidden">
@@ -207,6 +221,7 @@ export default function App() {
                   </div>
                 )}
                 {mobileTab === 'library' && <LibrarySidebar />}
+                {mobileTab === 'environments' && <EnvironmentsPanel />}
                 {mobileTab === 'sfx' && <SfxMatrix />}
               </div>
               <nav className={`flex border-t border-border shrink-0 ${bgImage ? 'bg-midnight/60 bg-midnight/40' : 'bg-midnight'}`}>
@@ -228,6 +243,7 @@ export default function App() {
         </div>
 
         {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+        {showMobileCreate && <CreatePlaylistModal onClose={() => setShowMobileCreate(false)} />}
       </div>
     </>
   )

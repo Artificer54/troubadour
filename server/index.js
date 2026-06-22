@@ -10,6 +10,7 @@ import imagesRouter from './routes/images.js'
 import tagsRouter from './routes/tags.js'
 import librariesRouter from './routes/libraries.js'
 import updateRouter from './routes/update.js'
+import environmentsRouter from './routes/environments.js'
 import { startUpdatePoller } from './updater.js'
 import { DATA_ROOT } from './paths.js'
 
@@ -32,6 +33,7 @@ app.use('/api/images', imagesRouter)
 app.use('/api/tags', tagsRouter)
 app.use('/api/libraries', librariesRouter)
 app.use('/api/update', updateRouter)
+app.use('/api/environments', environmentsRouter)
 
 // Serve uploaded files (default tracks dir only; library files are streamed via /api/assets/stream/:id)
 app.use('/tracks', express.static(join(DATA_ROOT, 'tracks')))

@@ -79,6 +79,41 @@ db.exec(`
     tag      TEXT NOT NULL,
     UNIQUE(asset_id, tag)
   );
+
+  CREATE TABLE IF NOT EXISTS environments (
+    id         TEXT PRIMARY KEY,
+    name       TEXT NOT NULL,
+    color      TEXT DEFAULT '#7c9885',
+    position   INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS environment_tracks (
+    id             TEXT PRIMARY KEY,
+    environment_id TEXT NOT NULL REFERENCES environments(id) ON DELETE CASCADE,
+    asset_id       TEXT NOT NULL REFERENCES audio_assets(id) ON DELETE CASCADE,
+    position       INTEGER DEFAULT 0,
+    created_at     TEXT DEFAULT (datetime('now')),
+    UNIQUE(environment_id, asset_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS environment_presets (
+    id             TEXT PRIMARY KEY,
+    environment_id TEXT NOT NULL REFERENCES environments(id) ON DELETE CASCADE,
+    name           TEXT NOT NULL,
+    position       INTEGER DEFAULT 0,
+    fade_duration  INTEGER DEFAULT 1500,
+    created_at     TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS environment_preset_tracks (
+    id                   TEXT PRIMARY KEY,
+    preset_id            TEXT NOT NULL REFERENCES environment_presets(id) ON DELETE CASCADE,
+    environment_track_id TEXT NOT NULL REFERENCES environment_tracks(id) ON DELETE CASCADE,
+    volume               REAL DEFAULT 1.0,
+    active               INTEGER DEFAULT 1,
+    UNIQUE(preset_id, environment_track_id)
+  );
 `)
 
 // Migrations — log unexpected failures but swallow idempotent "duplicate column" errors
