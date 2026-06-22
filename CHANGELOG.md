@@ -4,6 +4,15 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-21 (session 18)
+
+### Added
+- **Update status button** in the header (between network icon and settings) — shows a green checkmark when up to date, gold refresh when an update is available, red alert on error. Click to force an immediate check against GitHub.
+- **`POST /api/update/check`** server endpoint — triggers an on-demand GitHub SHA comparison and returns the result immediately.
+- **`checkForUpdatesNow()`** exported from `server/updater.js` — runs the check and returns fresh state for the new endpoint.
+
+---
+
 ## [Unreleased] — 2026-06-21 (session 17)
 
 ### Added

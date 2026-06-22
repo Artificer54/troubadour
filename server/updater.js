@@ -45,6 +45,11 @@ async function checkForUpdates() {
   }
 }
 
+export async function checkForUpdatesNow() {
+  await checkForUpdates()
+  return { ...state }
+}
+
 export function startUpdatePoller() {
   // Initial check after 30s (let server finish starting up)
   setTimeout(checkForUpdates, 30_000)

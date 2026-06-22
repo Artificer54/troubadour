@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Music, Zap, X, Settings, Library } from 'lucide-react'
+import { useEffect, useState, useCallback } from 'react'
+import { Music, Zap, X, Settings, Library, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react'
 import { useAppStore, applyTheme, applyIntensityColors } from './store/useAppStore'
 import ScenarioSidebar from './components/scenario/ScenarioSidebar'
 import ScenarioControlPanel from './components/scenario/ScenarioControlPanel'
@@ -33,6 +33,27 @@ export default function App() {
   const [showScenarioPicker, setShowScenarioPicker] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [splashDone, setSplashDone] = useState(false)
+
+  const [updateStatus, setUpdateStatus] = useState(null) // null | { updateAvailable, lastChecked, error }
+  const [checkingUpdate, setCheckingUpdate] = useState(false)
+
+  const checkUpdate = useCallback(async () => {
+    setCheckingUpdate(true)
+    try {
+      const res = await fetch('/api/update/check', { method: 'POST' })
+      const data = await res.json()
+      setUpdateStatus(data)
+    } catch {
+      setUpdateStatus({ error: 'Could not reach server' })
+    } finally {
+      setCheckingUpdate(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    // Load initial status without forcing a check
+    fetch('/api/update/status').then(r => r.json()).then(setUpdateStatus).catch(() => {})
+  }, [])
 
   const selectedScenario = playlists.find((p) => p.id === selectedId)
   const bgImage = selectedScenario?.background_image
@@ -87,6 +108,31 @@ export default function App() {
             </div>
             <div className="flex items-center gap-1">
               <NetworkStatusIcon />
+              {/* Update status button */}
+              <button
+                onClick={checkUpdate}
+                disabled={checkingUpdate}
+                title={
+                  checkingUpdate ? 'Checking for updates…'
+                  : updateStatus?.error ? `Update check failed: ${updateStatus.error}`
+                  : updateStatus?.updateAvailable ? 'Update available — click to re-check'
+                  : updateStatus?.lastChecked ? 'Up to date — click to check again'
+                  : 'Check for updates'
+                }
+                className="p-1.5 transition-colors rounded-md hover:bg-gold/10 disabled:opacity-50"
+              >
+                {checkingUpdate ? (
+                  <RefreshCw size={15} className="text-gray-500 animate-spin" />
+                ) : updateStatus?.error ? (
+                  <AlertCircle size={15} className="text-red-400" />
+                ) : updateStatus?.updateAvailable ? (
+                  <RefreshCw size={15} className="text-gold" />
+                ) : updateStatus?.lastChecked ? (
+                  <CheckCircle size={15} className="text-green-500" />
+                ) : (
+                  <RefreshCw size={15} className="text-gray-500" />
+                )}
+              </button>
               <button
                 onClick={() => setShowSettings(true)}
                 title="Settings"

@@ -1,10 +1,15 @@
 import { Router } from 'express'
-import { getUpdateState, applyUpdate } from '../updater.js'
+import { getUpdateState, applyUpdate, checkForUpdatesNow } from '../updater.js'
 
 const router = Router()
 
 router.get('/status', (_req, res) => {
   res.json(getUpdateState())
+})
+
+router.post('/check', async (_req, res) => {
+  const result = await checkForUpdatesNow()
+  res.json(result)
 })
 
 router.post('/apply', (_req, res) => {
