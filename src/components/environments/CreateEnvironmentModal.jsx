@@ -72,20 +72,14 @@ export default function CreateEnvironmentModal({ onClose }) {
         <form onSubmit={handleSubmit} className="flex flex-col gap-0">
           {/* Name */}
           <div className="px-5 py-4 border-b border-border">
-            <div className="flex items-center gap-2">
-              <div
-                className="w-3 h-3 rounded-full shrink-0"
-                style={{ backgroundColor: color }}
-              />
-              <input
-                autoFocus
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Environment name…"
-                className="input-dark flex-1"
-              />
-            </div>
+            <input
+              autoFocus
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Environment name…"
+              className="input-dark w-full"
+            />
           </div>
 
           {/* Photo upload */}

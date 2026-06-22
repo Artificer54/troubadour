@@ -172,9 +172,9 @@ function EnvironmentDetail({ environment, onBack, activeEnvironments }) {
       )}
 
       <div className="relative z-10 flex flex-col h-full overflow-hidden">
-        {/* Compact mixer — Master/Music/SFX only */}
+        {/* Mixer — Master/Music/SFX + current environment's tracks */}
         <div className={bgImage ? 'bg-midnight/90 backdrop-blur-sm border-b border-border/60' : ''}>
-          <MixerPanel activeEnvironments={activeEnvironments} hideEnvFaders />
+          <MixerPanel activeEnvironments={[environment]} />
         </div>
 
         {/* Env header */}
