@@ -4,6 +4,16 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-22 (session 28)
+
+### Added
+- **Rename tracks** — hover a track name to reveal a pencil icon; click it to edit the display name inline. Press Enter or ✓ to save, Escape to cancel. Only changes the name shown in Troubadour — the file on disk is untouched.
+
+### Fixed
+- **Disabled libraries hide their tracks** — tracks from a library that has been toggled off in Settings no longer appear in the library list. Re-enabling the library instantly restores them.
+
+---
+
 ## [Unreleased] — 2026-06-22 (session 27)
 
 ### Fixed

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Search, Play, Pause, X, Plus, Music2, Tag, ArrowRight, ChevronLeft, FolderPlus, Upload, Loader, FolderInput, Eye, EyeOff } from 'lucide-react'
+import { Search, Play, Pause, X, Plus, Music2, Tag, ArrowRight, ChevronLeft, FolderPlus, Upload, Loader, FolderInput, Eye, EyeOff, Pencil, Check } from 'lucide-react'
 import { useAppStore } from '../../store/useAppStore'
 import { previewEngine } from '../../lib/previewEngine'
 
@@ -128,6 +128,7 @@ export default function LibrarySidebar() {
   const pauseLibraryPreview = useAppStore((s) => s.pauseLibraryPreview)
   const stopLibraryPreview = useAppStore((s) => s.stopLibraryPreview)
   const removeTag = useAppStore((s) => s.removeTagFromAsset)
+  const renameAsset = useAppStore((s) => s.renameAsset)
   const toggleAssetHidden = useAppStore((s) => s.toggleAssetHidden)
   const setLibraryOpen = useAppStore((s) => s.setLibraryOpen)
   const playlistVolume = useAppStore((s) => s.playlistVolume)
@@ -143,6 +144,8 @@ export default function LibrarySidebar() {
   const [editTagFor, setEditTagFor] = useState(null)
   const [showHidden, setShowHidden] = useState(false)
   const [showPathFor, setShowPathFor] = useState(null)
+  const [renamingId, setRenamingId] = useState(null)
+  const [renameValue, setRenameValue] = useState('')
   const [progress, setProgress] = useState(0)
   const [elapsed, setElapsed] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -249,6 +252,10 @@ export default function LibrarySidebar() {
   }
 
   const filtered = audioAssets.filter(a => {
+    if (a.library_id) {
+      const lib = musicLibraries.find(l => l.id === a.library_id)
+      if (lib && !lib.enabled) return false
+    }
     if (!showHidden && a.hidden) return false
     const q = search.toLowerCase()
     const matchesSearch = !q || a.name.toLowerCase().includes(q) || (a.artist ?? '').toLowerCase().includes(q) || (a.album ?? '').toLowerCase().includes(q)
@@ -394,8 +401,34 @@ export default function LibrarySidebar() {
               </div>
 
               {/* Info */}
-              <div className="flex-1 min-w-0">
-                <p className={`text-xs truncate font-medium ${isActive ? 'text-gold' : 'text-gray-200'}`}>{asset.name}</p>
+              <div className="flex-1 min-w-0" onClick={e => e.stopPropagation()}>
+                {renamingId === asset.id ? (
+                  <form
+                    onSubmit={e => { e.preventDefault(); if (renameValue.trim()) renameAsset(asset.id, renameValue.trim()); setRenamingId(null) }}
+                    className="flex items-center gap-1"
+                  >
+                    <input
+                      autoFocus
+                      value={renameValue}
+                      onChange={e => setRenameValue(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Escape') setRenamingId(null) }}
+                      className="input-dark text-xs py-0.5 px-1.5 flex-1 min-w-0"
+                    />
+                    <button type="submit" className="text-gold shrink-0"><Check size={12}/></button>
+                    <button type="button" onClick={() => setRenamingId(null)} className="text-gray-600 shrink-0"><X size={12}/></button>
+                  </form>
+                ) : (
+                  <div className="flex items-center gap-1 group/name">
+                    <p className={`text-xs truncate font-medium ${isActive ? 'text-gold' : 'text-gray-200'}`}>{asset.name}</p>
+                    <button
+                      onClick={() => { setRenamingId(asset.id); setRenameValue(asset.name) }}
+                      title="Rename"
+                      className="opacity-0 group-hover/name:opacity-100 shrink-0 text-gray-600 hover:text-gold transition-all"
+                    >
+                      <Pencil size={10}/>
+                    </button>
+                  </div>
+                )}
                 {(asset.artist || asset.album) && (
                   <p className="text-[10px] text-gray-500 truncate">{[asset.artist, asset.album].filter(Boolean).join(' · ')}</p>
                 )}

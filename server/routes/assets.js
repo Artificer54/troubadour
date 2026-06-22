@@ -147,6 +147,15 @@ router.post('/open-folder', (_req, res) => {
   res.json({ ok: true, path: TRACKS_DIR })
 })
 
+router.patch('/:id/name', (req, res) => {
+  const name = req.body.name?.trim()
+  if (!name) return res.status(400).json({ error: 'name required' })
+  const asset = db.prepare(`SELECT id FROM audio_assets WHERE id = ?`).get(req.params.id)
+  if (!asset) return res.status(404).json({ error: 'Not found' })
+  db.prepare(`UPDATE audio_assets SET name = ? WHERE id = ?`).run(name, req.params.id)
+  res.json({ ok: true })
+})
+
 router.patch('/:id/hidden', (req, res) => {
   const asset = db.prepare(`SELECT id FROM audio_assets WHERE id = ?`).get(req.params.id)
   if (!asset) return res.status(404).json({ error: 'Not found' })
