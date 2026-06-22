@@ -4,6 +4,13 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-22 (session 29)
+
+### Fixed
+- **Rename updates scenario track names live** — renaming a track now also updates its `a_name` in every playlist in the store, so scenarios reflect the new name immediately without requiring a page reload.
+
+---
+
 ## [Unreleased] — 2026-06-22 (session 28)
 
 ### Added

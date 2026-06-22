@@ -74,7 +74,13 @@ export function createAssetSlice(set, get) {
         body: JSON.stringify({ name }),
       })
       if (!res.ok) return
-      set((s) => ({ audioAssets: s.audioAssets.map((a) => a.id === id ? { ...a, name } : a) }))
+      set((s) => ({
+        audioAssets: s.audioAssets.map((a) => a.id === id ? { ...a, name } : a),
+        playlists: s.playlists.map(p => ({
+          ...p,
+          tracks: (p.tracks ?? []).map(t => t.asset_id === id ? { ...t, a_name: name } : t),
+        })),
+      }))
     },
 
     toggleAssetHidden: async (id, hidden) => {
