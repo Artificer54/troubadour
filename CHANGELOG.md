@@ -4,6 +4,15 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-21 (session 20)
+
+### Fixed
+- **Auto-updater broken in dev mode** — `applyUpdate()` previously ran `git pull` → `npm install --omit=dev` → `npm run build` → `process.exit(0)` regardless of environment. In dev (no PM2), `process.exit(0)` killed the server with no restart, making it look like nothing happened. Now detects PM2 via `process.env.pm_id`: in production it keeps the original PM2 flow; in dev it does `git pull` + `npm install` (full deps, including Vite) and returns a message telling the user to restart their dev server.
+- **`UpdateBanner` now shows dev-mode message** — after applying in dev mode, the banner shows the "restart your dev server" message instead of hanging on "Updating…".
+- **`npm install --omit=dev` was wrong for dev** — devDependencies (Vite, etc.) are required in dev mode; fixed to use plain `npm install` when not under PM2.
+
+---
+
 ## [Unreleased] — 2026-06-21 (session 19)
 
 ### Fixed

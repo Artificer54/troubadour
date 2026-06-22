@@ -4,6 +4,9 @@ const REPO = 'Artificer54/troubadour'
 const POLL_MINUTES = parseInt(process.env.UPDATE_POLL_MINUTES ?? '15', 10)
 const GITHUB_API = `https://api.github.com/repos/${REPO}/commits/main`
 
+// PM2 sets pm_id on managed processes; its absence means we're in dev mode
+const isUnderPM2 = process.env.pm_id !== undefined
+
 let state = {
   currentSha: null,
   remoteSha: null,
@@ -64,9 +67,17 @@ export function getUpdateState() {
 export function applyUpdate() {
   console.log('[updater] Applying update...')
   execSync('git pull', { stdio: 'inherit' })
-  execSync('npm install --omit=dev', { stdio: 'inherit' })
-  execSync('npm run build', { stdio: 'inherit' })
-  console.log('[updater] Update complete — restarting...')
-  // PM2 will restart the process after exit
-  process.exit(0)
+
+  if (isUnderPM2) {
+    execSync('npm install --omit=dev', { stdio: 'inherit' })
+    execSync('npm run build', { stdio: 'inherit' })
+    console.log('[updater] Update complete — restarting via PM2...')
+    process.exit(0)
+  } else {
+    // Dev mode: pull and install all deps (including devDeps for Vite), but
+    // don't build or exit — the user needs to restart their dev server manually.
+    execSync('npm install', { stdio: 'inherit' })
+    console.log('[updater] Dev mode: pulled latest. Restart your dev server to apply changes.')
+    return { devMode: true }
+  }
 }

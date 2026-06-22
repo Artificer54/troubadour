@@ -4,6 +4,7 @@ import { RefreshCw, X } from 'lucide-react'
 export default function UpdateBanner() {
   const [updateAvailable, setUpdateAvailable] = useState(false)
   const [applying, setApplying] = useState(false)
+  const [applyMessage, setApplyMessage] = useState(null)
   const [dismissed, setDismissed] = useState(false)
 
   useEffect(() => {
@@ -25,9 +26,16 @@ export default function UpdateBanner() {
   async function handleUpdate() {
     setApplying(true)
     try {
-      await fetch('/api/update/apply', { method: 'POST' })
+      const res = await fetch('/api/update/apply', { method: 'POST' })
+      if (res.ok) {
+        const data = await res.json().catch(() => ({}))
+        if (data.devMode) {
+          setApplyMessage(data.message ?? 'Pulled latest. Restart your dev server.')
+        }
+        // In PM2 mode the server exits — connection drops, nothing more to do
+      }
     } catch {
-      // expected — server restarts and drops the connection
+      // expected in PM2 mode — server restarts and drops the connection
     }
   }
 
@@ -38,7 +46,9 @@ export default function UpdateBanner() {
       <div className="flex items-center gap-2">
         <RefreshCw size={12} className={applying ? 'animate-spin' : ''} />
         <span>
-          {applying
+          {applyMessage
+            ? applyMessage
+            : applying
             ? 'Updating… server will restart automatically.'
             : 'A new version of Troubadour is available.'}
         </span>
