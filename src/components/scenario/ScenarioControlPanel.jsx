@@ -285,7 +285,7 @@ export default function ScenarioControlPanel() {
 
               <button
                 onClick={stopPlayback}
-                disabled={!isActiveScenario}
+                disabled={!activePlaylistId}
                 className="flex items-center justify-center w-9 h-9 rounded-full border border-border text-gray-500 hover:text-red-400 hover:border-red-400 transition-all disabled:opacity-30"
               >
                 <Square size={14} />

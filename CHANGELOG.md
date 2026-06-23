@@ -4,6 +4,11 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-22 (session 34)
+
+### Fixed
+- **Stop button no longer disabled when switching scenarios** — the Stop (■) button was `disabled` whenever the viewed scenario wasn't the actively playing one. Changed condition to `disabled={!activePlaylistId}` so it stays enabled as long as any music is playing, regardless of which scenario is selected in the panel.
+
 ## [Unreleased] — 2026-06-22 (session 33)
 
 ### Fixed
