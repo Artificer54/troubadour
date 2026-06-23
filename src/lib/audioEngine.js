@@ -170,18 +170,28 @@ class AudioEngine {
       loop: true,
       volume: 0,
       onloaderror: (id, err) => console.error(`[audioEngine] Environment track load error — url: ${url}`, err),
+      onload: () => {
+        // Only fade in if this track is still active (not stopped before load finished)
+        if (this._environmentHowls.has(trackId)) {
+          howl.fade(0, target, fadeDuration)
+        }
+      },
     })
     this._environmentHowls.set(trackId, { howl, targetVolume: volume })
     howl.play()
-    howl.fade(0, target, fadeDuration)
   }
 
   stopEnvironmentTrack(trackId, fadeDuration = 1200) {
     const entry = this._environmentHowls.get(trackId)
     if (!entry) return
     this._environmentHowls.delete(trackId)
-    entry.howl.fade(entry.howl.volume(), 0, fadeDuration)
-    setTimeout(() => { try { entry.howl.stop(); entry.howl.unload() } catch (_) {} }, fadeDuration + 100)
+    const currentVol = entry.howl.volume()
+    if (currentVol > 0) {
+      entry.howl.fade(currentVol, 0, fadeDuration)
+      setTimeout(() => { try { entry.howl.stop(); entry.howl.unload() } catch (_) {} }, fadeDuration + 100)
+    } else {
+      try { entry.howl.stop(); entry.howl.unload() } catch (_) {}
+    }
   }
 
   stopAllEnvironmentTracks(fadeDuration = 1200) {

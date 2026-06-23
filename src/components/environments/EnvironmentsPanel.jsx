@@ -7,8 +7,9 @@ import CreateEnvironmentModal from './CreateEnvironmentModal'
 import EditEnvironmentModal from './EditEnvironmentModal'
 
 export default function EnvironmentsPanel() {
-  const environments         = useAppStore((s) => s.environments)
-  const activeEnvironmentIds = useAppStore((s) => s.activeEnvironmentIds)
+  const environments          = useAppStore((s) => s.environments)
+  const activeEnvironmentIds  = useAppStore((s) => s.activeEnvironmentIds)
+  const deactivateEnvironment = useAppStore((s) => s.deactivateEnvironment)
   const [showCreate, setShowCreate]       = useState(false)
   const [selectedEnvId, setSelectedEnvId] = useState(null)
 
@@ -73,7 +74,14 @@ export default function EnvironmentsPanel() {
                 </p>
               </div>
               {isActive && (
-                <div className="shrink-0 w-1.5 h-1.5 rounded-full" style={{ backgroundColor: env.color }} />
+                <button
+                  onClick={(e) => { e.stopPropagation(); deactivateEnvironment(env.id) }}
+                  title="Stop environment"
+                  className="shrink-0 flex items-center justify-center w-5 h-5 rounded-full border transition-colors hover:bg-red-500/20 hover:border-red-400"
+                  style={{ borderColor: env.color }}
+                >
+                  <Square size={8} style={{ color: env.color }} fill="currentColor" />
+                </button>
               )}
             </div>
           )

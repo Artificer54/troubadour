@@ -4,6 +4,12 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-22 (session 35)
+
+### Fixed
+- **Environment audio now actually stops** — with `html5: true`, calling `howl.fade()` before the audio loaded was silently failing. The fade-in now happens inside the `onload` callback, so volume ramps up correctly. Stop also skips the fade-out if the track hasn't loaded yet, preventing the Howl from hanging.
+- **Stop button visible in environment list** — when an environment is playing, a small ■ stop button now appears on its list row. Clicking it stops that environment immediately without needing to drill into the detail view. Previously the only way to stop was inside the detail panel.
+
 ## [Unreleased] — 2026-06-22 (session 34)
 
 ### Fixed
