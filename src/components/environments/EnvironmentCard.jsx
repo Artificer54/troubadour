@@ -68,8 +68,7 @@ export default function EnvironmentCard({ environment }) {
               onClick={toggleActive}
               disabled={!hasTracks}
               title={isActive ? 'Stop' : 'Play'}
-              className="p-1 rounded-md transition-colors disabled:opacity-30"
-              style={isActive ? { color: environment.color } : { color: 'rgb(107 114 128)' }}
+              className={`p-1 rounded-md transition-colors disabled:opacity-30 ${isActive ? 'text-gray-100' : 'text-gray-500 hover:text-gray-300'}`}
             >
               {isActive ? <Square size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" />}
             </button>

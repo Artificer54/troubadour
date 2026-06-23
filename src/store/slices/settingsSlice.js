@@ -37,6 +37,10 @@ export function createSettingsSlice(set, get) {
     setFadeDuration: (ms) => { audioEngine.setCrossfadeDuration(ms); set({ fadeDuration: ms }) },
     loopSingle: false,
     toggleLoopSingle: () => set((s) => ({ loopSingle: !s.loopSingle })),
+    loopUntilEnabled: false,
+    loopUntilMinutes: 5,
+    toggleLoopUntil: () => set((s) => ({ loopUntilEnabled: !s.loopUntilEnabled })),
+    setLoopUntilMinutes: (n) => set({ loopUntilMinutes: Math.max(1, Math.min(60, n)) }),
 
     // Theme
     activeTheme: storage.getStr('theme', 'darkfantasy'),

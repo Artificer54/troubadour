@@ -142,5 +142,6 @@ migrate(`ALTER TABLE environments ADD COLUMN background_image_original TEXT`, 'e
 migrate(`ALTER TABLE environments ADD COLUMN bg_blur INTEGER DEFAULT 12`, 'environments.bg_blur')
 migrate(`ALTER TABLE environments ADD COLUMN bg_darkness INTEGER DEFAULT 55`, 'environments.bg_darkness')
 migrate(`ALTER TABLE audio_assets ADD COLUMN track_type TEXT NOT NULL DEFAULT 'music'`, 'audio_assets.track_type')
+migrate(`ALTER TABLE music_libraries ADD COLUMN default_track_type TEXT NOT NULL DEFAULT 'music'`, 'music_libraries.default_track_type')
 
 export default db

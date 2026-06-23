@@ -45,7 +45,7 @@ router.get('/', (_req, res) => {
 })
 
 router.post('/', (req, res) => {
-  const { name, path: libPath } = req.body
+  const { name, path: libPath, default_track_type } = req.body
   if (!name?.trim()) return res.status(400).json({ error: 'name required' })
   if (!libPath?.trim()) return res.status(400).json({ error: 'path required' })
   if (!existsSync(libPath)) return res.status(400).json({ error: 'Path does not exist on disk' })
@@ -53,8 +53,9 @@ router.post('/', (req, res) => {
   const existing = db.prepare(`SELECT id FROM music_libraries WHERE path = ?`).get(libPath)
   if (existing) return res.status(409).json({ error: 'Library with this path already exists' })
 
+  const trackType = ['music', 'ambience', 'sfx'].includes(default_track_type) ? default_track_type : 'music'
   const id = randomUUID()
-  db.prepare(`INSERT INTO music_libraries (id, name, path) VALUES (?, ?, ?)`).run(id, name.trim(), libPath.trim())
+  db.prepare(`INSERT INTO music_libraries (id, name, path, default_track_type) VALUES (?, ?, ?, ?)`).run(id, name.trim(), libPath.trim(), trackType)
   const row = db.prepare(`SELECT * FROM music_libraries WHERE id = ?`).get(id)
   res.json(withAssetCount(row))
 })
@@ -82,13 +83,15 @@ router.post('/browse-folder', (_req, res) => {
 })
 
 router.put('/:id', (req, res) => {
-  const { name, enabled } = req.body
+  const { name, enabled, default_track_type } = req.body
   const lib = db.prepare(`SELECT * FROM music_libraries WHERE id = ?`).get(req.params.id)
   if (!lib) return res.status(404).json({ error: 'Not found' })
 
-  db.prepare(`UPDATE music_libraries SET name = ?, enabled = ? WHERE id = ?`).run(
+  const trackType = ['music', 'ambience', 'sfx'].includes(default_track_type) ? default_track_type : lib.default_track_type
+  db.prepare(`UPDATE music_libraries SET name = ?, enabled = ?, default_track_type = ? WHERE id = ?`).run(
     name?.trim() ?? lib.name,
     enabled !== undefined ? (enabled ? 1 : 0) : lib.enabled,
+    trackType,
     req.params.id
   )
   const row = db.prepare(`SELECT * FROM music_libraries WHERE id = ?`).get(req.params.id)
@@ -151,9 +154,9 @@ router.post('/:id/scan', async (req, res) => {
 
       const { artist, album, cover_art_path } = await extractMetadata(fullPath, id)
       db.prepare(`
-        INSERT OR IGNORE INTO audio_assets (id, name, storage_path, file_hash, mime_type, file_size, artist, album, cover_art_path, library_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(id, name, relativePath, hashKey, 'audio/mpeg', stats.size, artist, album, cover_art_path, lib.id)
+        INSERT OR IGNORE INTO audio_assets (id, name, storage_path, file_hash, mime_type, file_size, artist, album, cover_art_path, library_id, track_type)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(id, name, relativePath, hashKey, 'audio/mpeg', stats.size, artist, album, cover_art_path, lib.id, lib.default_track_type ?? 'music')
       existingHashes.add(hashKey)
       added++
     }

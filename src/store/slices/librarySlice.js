@@ -9,11 +9,11 @@ export function createLibrarySlice(set, get) {
       if (res.ok) set({ musicLibraries: await res.json() })
     },
 
-    addMusicLibrary: async (name, path) => {
+    addMusicLibrary: async (name, path, default_track_type = 'music') => {
       const res = await api('/api/libraries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, path }),
+        body: JSON.stringify({ name, path, default_track_type }),
       })
       if (!res.ok) {
         const { error } = await res.json().catch(() => ({ error: 'Unknown error' }))

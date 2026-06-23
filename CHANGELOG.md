@@ -4,6 +4,17 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-23 (session 36)
+
+### Added
+- **Library folder track type** — when adding a new music library folder, the user can choose whether its tracks are Music, Ambience, or SFX via pill buttons. Newly scanned tracks inherit the folder's default type automatically. Existing library rows show color-coded type pills that can be changed to re-classify future scans. DB migration adds `default_track_type` to `music_libraries`.
+- **Loop Until X Minutes** — new Advanced Controls toggle: "Loop Until". When enabled, the current track replays until it has accumulated X minutes of play time (1–60 min, configurable), then automatically advances to the next track. Manual skip always works immediately and resets the timer. Mutually exclusive with "Loop Single Track" (which dims when Loop Until is active).
+- **Library type filter chips** — Music / Ambience / SFX filter buttons now appear in both the library sidebar and the full library panel, above the tag filters. Clicking a chip filters the track list to that type; multiple chips can be combined with text search and tag filters.
+
+### Changed
+- **Environment autofade on switch** — activating a new environment now automatically fades out all other currently-active environments before fading in the new one, creating a smooth crossfade transition instead of stacking sounds.
+- **Environment play button color** — the play/stop button on environment rows was using the environment's accent color when active (varied, sometimes hard to read). It now uses standard white when active and gray when inactive, matching the scenario play button convention.
+
 ## [Unreleased] — 2026-06-22 (session 35)
 
 ### Fixed

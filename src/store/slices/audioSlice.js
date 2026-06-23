@@ -29,6 +29,8 @@ export function createAudioSlice(set, get) {
     currentTrack: null,
     playedInCycle: [],
     lastIntensityIndex: storage.get('last-intensity', 0),
+    _trackStartTime: null,
+    _trackAccumulatedMs: 0,
 
     pinnedStartTracks: storage.get('pinned-tracks', {}),
     setPinnedStartTrack: (playlistId, intensityLevel, trackId) => {
@@ -83,16 +85,26 @@ export function createAudioSlice(set, get) {
       const pinnedTrack = pinnedId ? tracks.find((t) => t.id === pinnedId) : null
 
       if (pinnedTrack) {
-        set({ currentTrack: pinnedTrack, playedInCycle: [pinnedTrack.id] })
+        set({ currentTrack: pinnedTrack, playedInCycle: [pinnedTrack.id], _trackStartTime: Date.now(), _trackAccumulatedMs: 0 })
         const fadeDuration = get().fadeDuration
         setTimeout(() => set({ isTransitioning: false }), fadeDuration + 200)
         const url = getTrackUrl(pinnedTrack.audio_assets)
-        audioEngine.playTrack(url, pinnedTrack.id, () => {
+        const onPinnedEnd = () => {
           const s = get()
           if (!s.isPlaying) return
-          if (s.loopSingle) s._playNext([pinnedTrack])
-          else s._playNext()
-        })
+          if (s.loopSingle) { s._playNext([pinnedTrack]); return }
+          if (s.loopUntilEnabled) {
+            const elapsed = Date.now() - (s._trackStartTime ?? Date.now())
+            const total = s._trackAccumulatedMs + elapsed
+            if (total < s.loopUntilMinutes * 60_000) {
+              set({ _trackAccumulatedMs: total, _trackStartTime: Date.now() })
+              audioEngine.playTrack(url, pinnedTrack.id, onPinnedEnd)
+              return
+            }
+          }
+          s._playNext()
+        }
+        audioEngine.playTrack(url, pinnedTrack.id, onPinnedEnd)
       } else {
         await get()._playNext(tracks)
       }
@@ -115,18 +127,34 @@ export function createAudioSlice(set, get) {
       }
 
       const chosen = state.shuffle ? smartShuffle(available)[0] : available[0]
-      set((s) => ({ playedInCycle: [...s.playedInCycle, chosen.id], currentTrack: chosen, isTransitioning: true }))
+      set((s) => ({
+        playedInCycle: [...s.playedInCycle, chosen.id],
+        currentTrack: chosen,
+        isTransitioning: true,
+        _trackStartTime: Date.now(),
+        _trackAccumulatedMs: 0,
+      }))
 
       const fadeDuration = get().fadeDuration
       setTimeout(() => set({ isTransitioning: false }), fadeDuration + 200)
 
       const url = getTrackUrl(chosen.audio_assets)
-      audioEngine.playTrack(url, chosen.id, () => {
+      const onEnd = () => {
         const s = get()
         if (!s.isPlaying) return
-        if (s.loopSingle) s._playNext([chosen])
-        else s._playNext()
-      })
+        if (s.loopSingle) { s._playNext([chosen]); return }
+        if (s.loopUntilEnabled) {
+          const elapsed = Date.now() - (s._trackStartTime ?? Date.now())
+          const total = s._trackAccumulatedMs + elapsed
+          if (total < s.loopUntilMinutes * 60_000) {
+            set({ _trackAccumulatedMs: total, _trackStartTime: Date.now() })
+            audioEngine.playTrack(url, chosen.id, onEnd)
+            return
+          }
+        }
+        s._playNext()
+      }
+      audioEngine.playTrack(url, chosen.id, onEnd)
     },
 
     pauseResume: () => {
@@ -147,7 +175,10 @@ export function createAudioSlice(set, get) {
 
     skipTrack: () => {
       const s = get()
-      if (s.isPlaying) s._playNext()
+      if (s.isPlaying) {
+        set({ _trackAccumulatedMs: 0, _trackStartTime: null })
+        s._playNext()
+      }
     },
 
     startPlaylistAtTrack: (playlist, intensityLevel, trackId) => {
@@ -165,16 +196,28 @@ export function createAudioSlice(set, get) {
         isTransitioning: true,
         currentTrack: track,
         lastIntensityIndex: intensityLevel,
+        _trackStartTime: Date.now(),
+        _trackAccumulatedMs: 0,
       })
       const fadeDuration = get().fadeDuration
       setTimeout(() => set({ isTransitioning: false }), fadeDuration + 200)
       const url = getTrackUrl(track.audio_assets)
-      audioEngine.playTrack(url, track.id, () => {
+      const onAtEnd = () => {
         const s = get()
         if (!s.isPlaying) return
-        if (s.loopSingle) s._playNext([track])
-        else s._playNext()
-      })
+        if (s.loopSingle) { s._playNext([track]); return }
+        if (s.loopUntilEnabled) {
+          const elapsed = Date.now() - (s._trackStartTime ?? Date.now())
+          const total = s._trackAccumulatedMs + elapsed
+          if (total < s.loopUntilMinutes * 60_000) {
+            set({ _trackAccumulatedMs: total, _trackStartTime: Date.now() })
+            audioEngine.playTrack(url, track.id, onAtEnd)
+            return
+          }
+        }
+        s._playNext()
+      }
+      audioEngine.playTrack(url, track.id, onAtEnd)
     },
 
     // Library preview

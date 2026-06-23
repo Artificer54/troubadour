@@ -22,6 +22,7 @@ export default function LibraryManager() {
   const [showAdd, setShowAdd]   = useState(false)
   const [newName, setNewName]   = useState('')
   const [newPath, setNewPath]   = useState('')
+  const [newType, setNewType]   = useState('music')
   const [browsing, setBrowsing] = useState(false)
   const [scanning, setScanning] = useState(null)
   const [scanResult, setScanResult] = useState({})
@@ -35,10 +36,11 @@ export default function LibraryManager() {
 
   const handleAdd = async () => {
     if (!newName.trim() || !newPath.trim()) return
-    const lib = await addMusicLibrary(newName.trim(), newPath.trim())
+    const lib = await addMusicLibrary(newName.trim(), newPath.trim(), newType)
     if (lib) {
       setNewName('')
       setNewPath('')
+      setNewType('music')
       setShowAdd(false)
     }
   }
@@ -80,6 +82,25 @@ export default function LibraryManager() {
             placeholder="Display name (e.g. Fantasy Ambience)"
             className="input-dark w-full text-xs py-1.5"
           />
+          {/* Track type selector */}
+          <div className="flex gap-1.5">
+            {[
+              { id: 'music',    label: 'Music',    color: 'text-gold border-gold/60 bg-gold/10' },
+              { id: 'ambience', label: 'Ambience', color: 'text-green-400 border-green-500/60 bg-green-500/10' },
+              { id: 'sfx',      label: 'SFX',      color: 'text-blue-400 border-blue-500/60 bg-blue-500/10' },
+            ].map(t => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setNewType(t.id)}
+                className={`px-2.5 py-1 rounded-full border text-[11px] font-medium transition-colors ${
+                  newType === t.id ? t.color : 'border-border text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
           <div className="flex gap-1.5">
             <input
               type="text"
@@ -169,6 +190,26 @@ export default function LibraryManager() {
               >
                 <Trash2 size={13} />
               </button>
+            </div>
+
+            <div className="flex items-center gap-2 pl-5">
+              {[
+                { id: 'music',    label: 'Music',    color: 'text-gold border-gold/50 bg-gold/10' },
+                { id: 'ambience', label: 'Ambience', color: 'text-green-400 border-green-500/50 bg-green-500/10' },
+                { id: 'sfx',      label: 'SFX',      color: 'text-blue-400 border-blue-500/50 bg-blue-500/10' },
+              ].map(t => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => updateMusicLibrary(lib.id, { default_track_type: t.id })}
+                  title={`Set default type to ${t.label}`}
+                  className={`px-2 py-0.5 rounded-full border text-[10px] transition-colors ${
+                    (lib.default_track_type ?? 'music') === t.id ? t.color : 'border-border text-gray-600 hover:text-gray-400'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
             </div>
 
             <div className="flex items-center justify-between pl-5">

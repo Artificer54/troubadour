@@ -130,6 +130,7 @@ export default function LibraryPanel() {
 
   const [search, setSearch] = useState('')
   const [activeTags, setActiveTags] = useState([])
+  const [activeTypes, setActiveTypes] = useState([])
   const [addScenarioFor, setAddScenarioFor] = useState(null)
   const [editTagFor, setEditTagFor] = useState(null)
   const [progress, setProgress] = useState(0)
@@ -197,6 +198,10 @@ export default function LibraryPanel() {
     setActiveTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
   }
 
+  const toggleTypeFilter = (type) => {
+    setActiveTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type])
+  }
+
   const filtered = audioAssets.filter(a => {
     const q = search.toLowerCase()
     const matchesSearch = !q ||
@@ -204,7 +209,8 @@ export default function LibraryPanel() {
       (a.artist ?? '').toLowerCase().includes(q) ||
       (a.album ?? '').toLowerCase().includes(q)
     const matchesTags = activeTags.length === 0 || activeTags.every(t => (a.tags ?? []).includes(t))
-    return matchesSearch && matchesTags
+    const matchesType = activeTypes.length === 0 || activeTypes.includes(a.track_type ?? 'music')
+    return matchesSearch && matchesTags && matchesType
   })
 
   const previewAsset = audioAssets.find(a => a.id === libraryPreview.assetId)
@@ -230,6 +236,30 @@ export default function LibraryPanel() {
           {search && (
             <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300">
               <X size={12}/>
+            </button>
+          )}
+        </div>
+
+        {/* Track type filter */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {[
+            { id: 'music',    label: 'Music',    active: 'bg-gold/15 border-gold/50 text-gold' },
+            { id: 'ambience', label: 'Ambience', active: 'bg-green-500/15 border-green-500/50 text-green-400' },
+            { id: 'sfx',      label: 'SFX',      active: 'bg-blue-500/15 border-blue-500/50 text-blue-400' },
+          ].map(t => (
+            <button
+              key={t.id}
+              onClick={() => toggleTypeFilter(t.id)}
+              className={`px-2.5 py-0.5 rounded-full border text-[11px] transition-colors ${
+                activeTypes.includes(t.id) ? t.active : 'border-border text-gray-500 hover:border-gray-600 hover:text-gray-300'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+          {activeTypes.length > 0 && (
+            <button onClick={() => setActiveTypes([])} className="text-[10px] text-gray-600 hover:text-gray-300 ml-1">
+              Clear
             </button>
           )}
         </div>

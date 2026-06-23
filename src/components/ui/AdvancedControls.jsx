@@ -10,6 +10,10 @@ export default function AdvancedControls() {
   const toggleLoopSingle          = useAppStore((s) => s.toggleLoopSingle)
   const shuffle                   = useAppStore((s) => s.shuffle)
   const toggleShuffle             = useAppStore((s) => s.toggleShuffle)
+  const loopUntilEnabled          = useAppStore((s) => s.loopUntilEnabled)
+  const loopUntilMinutes          = useAppStore((s) => s.loopUntilMinutes)
+  const toggleLoopUntil           = useAppStore((s) => s.toggleLoopUntil)
+  const setLoopUntilMinutes       = useAppStore((s) => s.setLoopUntilMinutes)
 
   const fadeSeconds = (fadeDuration / 1000).toFixed(1)
 
@@ -56,9 +60,30 @@ export default function AdvancedControls() {
             <Toggle
               label="Loop Single Track"
               description="Repeat the current track instead of advancing"
-              value={loopSingle}
+              value={loopSingle && !loopUntilEnabled}
               onToggle={toggleLoopSingle}
+              disabled={loopUntilEnabled}
             />
+            <Toggle
+              label="Loop Until"
+              description="Repeat a track until it has played for X minutes, then advance"
+              value={loopUntilEnabled}
+              onToggle={toggleLoopUntil}
+            />
+            {loopUntilEnabled && (
+              <div className="pl-0 flex items-center gap-3">
+                <label className="text-xs text-gray-400 shrink-0">Loop for</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={60}
+                  value={loopUntilMinutes}
+                  onChange={e => setLoopUntilMinutes(+e.target.value)}
+                  className="input-dark w-16 text-xs py-1 text-center"
+                />
+                <span className="text-xs text-gray-500">minutes, then advance</span>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -66,16 +91,17 @@ export default function AdvancedControls() {
   )
 }
 
-function Toggle({ label, description, value, onToggle }) {
+function Toggle({ label, description, value, onToggle, disabled }) {
   return (
-    <label className="flex items-center justify-between gap-3 cursor-pointer select-none group">
+    <label className={`flex items-center justify-between gap-3 select-none group ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}>
       <div>
         <p className="text-sm text-gray-300 group-hover:text-gray-100 transition-colors">{label}</p>
         {description && <p className="text-[10px] text-gray-500">{description}</p>}
       </div>
       <button
         type="button"
-        onClick={onToggle}
+        onClick={disabled ? undefined : onToggle}
+        disabled={disabled}
         className={`relative shrink-0 w-10 h-5 rounded-full transition-colors ${value ? 'bg-gold' : 'bg-border'}`}
       >
         <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${value ? 'translate-x-5' : ''}`} />

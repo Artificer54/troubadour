@@ -114,6 +114,10 @@ export function createEnvironmentSlice(set, get) {
       const env = state.environments.find(e => e.id === environmentId)
       if (!env) return
 
+      // Fade out all other active environments before activating this one
+      const others = state.activeEnvironmentIds.filter(id => id !== environmentId)
+      for (const otherId of others) get().deactivateEnvironment(otherId)
+
       const envVolume = state.environmentVolumes?.[environmentId] ?? 1.0
 
       // Start all tracks in the environment (or active preset's tracks)
