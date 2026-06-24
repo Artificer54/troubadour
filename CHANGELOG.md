@@ -4,6 +4,13 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-24 (session 37)
+
+### Fixed
+- **Auto-update no longer flashes terminal** — removed the background update poller that ran `git rev-parse HEAD` every 15 minutes via `execSync`, which briefly opened a console window on Windows and interrupted other programs. Update checks now only happen when the user manually clicks the check button.
+
+---
+
 ## [Unreleased] — 2026-06-23 (session 36)
 
 ### Added

@@ -19,8 +19,6 @@ export default function UpdateBanner() {
       }
     }
     check()
-    const id = setInterval(check, 5 * 60 * 1000)
-    return () => clearInterval(id)
   }, [])
 
   async function handleUpdate() {

@@ -11,7 +11,6 @@ import tagsRouter from './routes/tags.js'
 import librariesRouter from './routes/libraries.js'
 import updateRouter from './routes/update.js'
 import environmentsRouter from './routes/environments.js'
-import { startUpdatePoller } from './updater.js'
 import { DATA_ROOT } from './paths.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -54,5 +53,4 @@ app.use((err, _req, res, _next) => {
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Troubadour server running on http://0.0.0.0:${PORT}`)
-  startUpdatePoller()
 })
