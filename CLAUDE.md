@@ -3,9 +3,10 @@
 ## Development Workflow
 - **Changelog Automation:** Every time you make an app edit, modify source files, or fix a bug, you must immediately update the `CHANGELOG.md` file in the root directory. Do this as part of your "definition of done" before declaring the task finished.
 - **Git Automation:** When you have completed a task, verified the changes, and updated the changelog, you must automatically commit your changes and push them to the remote GitHub repository before ending the session.
+- **Readme Automation:** When you complete a new edit, check the 'README.md' file if applicable to stay up to date with the latest changes. Do this as part of your "definition of done" before declaring the task finished.
 
 ## Tech Stack & Commands
-- **Development Server:** To run the local development server, use `npm run dev`. This starts both the Express API (port 3001) and the Vite frontend (port 5173).
+- **Development Server:** To run the local development server, use `npm run dev`. This starts both the Express API (port 3001) and the Vite frontend (port 3227).
 - **Build Command:** To build the project, use `npm run build`.
 - **Production Build Requirement:** After completing any task that modifies source files (`src/`, `server/`, `vite.config.js`, `package.json`), you must run `npm run build` so the production build on port 3001 stays current. Do this after committing and before ending the session.
 
@@ -14,7 +15,7 @@ After every edit to any source file, you must restart the dev servers before ver
 1. Kill all running node processes: `Get-Process -Name node -ErrorAction SilentlyContinue | Stop-Process -Force` (PowerShell)
 2. Stop any preview server: call `preview_stop` for each running server ID
 3. Start the API server: `preview_start` with name `troubadour-api` (Express on port 3001)
-4. Start the UI server: `preview_start` with name `troubadour` (Vite on port 5173)
+4. Start the UI server: `preview_start` with name `troubadour` (Vite on port 3227)
 5. Verify in the preview screenshot that the app loads and the change is visible
 
 ## Changelog Format

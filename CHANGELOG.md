@@ -4,6 +4,17 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-26 (session 39)
+
+### Changed
+- **Dev server port changed to 3227** — Vite frontend now runs on port 3227 (was 5173). Express API remains on 3001.
+- **Manifest improved for PWA install** — added 192x192 icon entry alongside existing 512x512 so Chrome's install criteria are met.
+
+### Added
+- **Service worker** (`public/sw.js`) — minimal network-first SW; registered in `main.jsx` on page load, satisfying PWA installability requirements.
+
+---
+
 ## [Unreleased] — 2026-06-26 (session 38)
 
 ### Changed
