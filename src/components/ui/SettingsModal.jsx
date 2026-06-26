@@ -402,8 +402,8 @@ pm2 startup    # auto-start on reboot`}</pre>
               <p className="text-base font-semibold text-gray-100">Updating Troubadour</p>
 
               <div className="border border-gold/20 bg-gold/5 rounded-lg p-2.5 mt-1">
-                <p className="text-xs font-medium text-gold mb-1">Auto-updates are active</p>
-                <p className="text-xs text-gray-400">Troubadour checks GitHub for new versions every 15 minutes. When one is available, a banner appears at the top of the app — click <span className="text-gray-200">Update Now</span> to download, rebuild, and restart automatically.</p>
+                <p className="text-xs font-medium text-gold mb-1">On-demand updates</p>
+                <p className="text-xs text-gray-400">Click <span className="text-gray-200">Check for Updates</span> to check GitHub for a new version. When one is available, a banner appears at the top of the app — click <span className="text-gray-200">Update Now</span> to download, rebuild, and restart automatically.</p>
               </div>
 
               <p className="text-[10px] text-gray-500 uppercase tracking-widest pt-3">Manual update (fallback)</p>

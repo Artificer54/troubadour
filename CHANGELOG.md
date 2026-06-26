@@ -4,6 +4,14 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-06-26 (session 38)
+
+### Changed
+- **Auto-update poller fully removed** — deleted the `startUpdatePoller` function and the `POLL_MINUTES` constant from `server/updater.js`. No `setTimeout`/`setInterval` logic remains; update checks only run when the user clicks Check for Updates.
+- **Settings UI updated** — the Updates help section no longer says "every 15 minutes"; it now explains the on-demand check flow.
+
+---
+
 ## [Unreleased] — 2026-06-24 (session 37)
 
 ### Fixed

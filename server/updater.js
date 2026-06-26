@@ -8,7 +8,6 @@ const ROOT = join(__dirname, '..')
 const DIST = join(ROOT, 'dist')
 
 const REPO = 'Artificer54/troubadour'
-const POLL_MINUTES = parseInt(process.env.UPDATE_POLL_MINUTES ?? '15', 10)
 const GITHUB_API = `https://api.github.com/repos/${REPO}/commits/main`
 
 // PM2 sets pm_id on managed processes; dist/ existing means we're serving a production build
@@ -59,13 +58,6 @@ async function checkForUpdates() {
 export async function checkForUpdatesNow() {
   await checkForUpdates()
   return { ...state }
-}
-
-export function startUpdatePoller() {
-  // Initial check after 30s (let server finish starting up)
-  setTimeout(checkForUpdates, 30_000)
-  setInterval(checkForUpdates, POLL_MINUTES * 60 * 1000)
-  console.log(`[updater] Polling GitHub every ${POLL_MINUTES} minutes`)
 }
 
 export function getUpdateState() {
