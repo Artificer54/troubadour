@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"nodemon --watch server --ext js,mjs server/index.js\" \"vite\"",
+    "dev": "concurrently \"cross-env SERVER_PORT=3001 nodemon --watch server --ext js,mjs server/index.js\" \"vite\"",
     "dev:ui": "vite",
     "build": "vite build",
     "start": "node server/index.js",
@@ -29,6 +29,7 @@
     "@vitejs/plugin-react": "^4.7.0",
     "autoprefixer": "^10.4.20",
     "concurrently": "^10.0.3",
+    "cross-env": "^10.1.0",
     "nodemon": "^3.1.14",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.13",

@@ -7,10 +7,12 @@ All notable changes to Troubadour are recorded here.
 ## [Unreleased] — 2026-06-26 (session 39)
 
 ### Changed
-- **Dev server port changed to 3227** — Vite frontend now runs on port 3227 (was 5173). Express API remains on 3001.
+- **Production server moved to port 3227** — Express (which serves both the API and the built SPA) now defaults to port 3227. Dev mode pins Express to 3001 via `cross-env SERVER_PORT=3001` so Vite's proxy still works without conflict.
+- **Dev Vite port changed to 3227** — Vite frontend now runs on port 3227 (was 5173) in dev; production is served by Express on the same 3227 port.
 - **Manifest improved for PWA install** — added 192x192 icon entry alongside existing 512x512 so Chrome's install criteria are met.
 
 ### Added
+- **cross-env** devDependency — used in the dev script to pin `SERVER_PORT=3001` cross-platform.
 - **Service worker** (`public/sw.js`) — minimal network-first SW; registered in `main.jsx` on page load, satisfying PWA installability requirements.
 
 ---
