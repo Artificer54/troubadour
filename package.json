@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"cross-env SERVER_PORT=3001 nodemon --watch server --ext js,mjs server/index.js\" \"vite\"",
+    "dev": "concurrently \"nodemon --watch server --ext js,mjs server/index.js\" \"vite\"",
     "dev:ui": "vite",
     "build": "vite build",
     "start": "node server/index.js",

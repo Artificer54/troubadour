@@ -15,7 +15,7 @@ import { DATA_ROOT } from './paths.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, '..')
-const PORT = process.env.SERVER_PORT ?? 3227
+const PORT = process.env.SERVER_PORT ?? 3001
 
 const app = express()
 app.use(cors())

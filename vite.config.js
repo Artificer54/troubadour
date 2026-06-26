@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: '0.0.0.0',
-    port: 3227,
+    port: 5173,
     allowedHosts: 'all',
     // Dev proxy so relative /api calls reach Express on 3001
     proxy: {
