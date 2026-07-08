@@ -4,6 +4,14 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-07-07
+
+### Changed
+- **`ecosystem.config.cjs` now pins `SERVER_PORT: 3101`** — matches the port the always-on production instance actually runs on (previously unset in the config, relying on whatever the shell's env happened to be at `pm2 start` time). Restarting from a clean `pm2 start ecosystem.config.cjs` now reproduces the correct port without tribal knowledge.
+- **PM2 registered for Windows auto-start** — ran `pm2-startup install` (host-level, via the already-installed `pm2-windows-startup` package) and `pm2 save`, so this app and Budget Hero both come back automatically after a reboot/login instead of needing a manual `pm2 resurrect`.
+
+---
+
 ## [Unreleased] — 2026-06-26 (session 39)
 
 ### Changed
