@@ -4,6 +4,11 @@
 
 /* ── Default theme (Dark Fantasy) ─────────────────────────── */
 :root {
+  /* Force dark rendering regardless of system light/dark setting.
+     Without this, Android's "auto dark theme" (and iOS form-control
+     theming) will repaint inline SVG/canvas colors and native controls
+     to match the OS, which is what caused the disk to go white. */
+  color-scheme: dark;
   --color-accent:   212 175 55;
   --color-darkbg:   17 24 39;
   --color-midnight: 13 13 26;

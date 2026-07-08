@@ -4,6 +4,13 @@ All notable changes to Troubadour are recorded here.
 
 ---
 
+## [Unreleased] — 2026-07-08
+
+### Fixed
+- **PWA no longer reacts to the phone's system light/dark setting** — added `<meta name="color-scheme" content="dark">` to `index.html` and `color-scheme: dark` to `:root` in `src/index.css`. Without an explicit declaration, Android's "auto dark theme" (and similar mobile browser heuristics) was repainting colors — including the hardcoded inline SVG fills on the scenario disk — whenever the OS was in dark mode, which is why the disk was rendering white on some phones. The app is dark-themed by design regardless of system setting, so it now opts out of that heuristic entirely and renders identically on mobile and desktop.
+
+---
+
 ## [Unreleased] — 2026-07-07
 
 ### Changed
