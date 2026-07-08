@@ -12,11 +12,17 @@
 
 ## Server Restart Protocol
 After every edit to any source file, you must restart the dev servers before verifying or declaring the task done:
-1. Kill all running node processes: `Get-Process -Name node -ErrorAction SilentlyContinue | Stop-Process -Force` (PowerShell)
+1. Kill only the processes bound to the dev ports (3001, 5173) — **never** kill node processes by name. This machine also runs a PM2 daemon managing always-on production instances of this app and others (e.g. budget-hero); killing node by name takes all of them down too.
+   ```powershell
+   try { Get-NetTCPConnection -LocalPort 3001,5173 -ErrorAction Stop | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue } } catch {}
+   exit 0
+   ```
+   (the try/catch plus trailing `exit 0` are required: nothing listening on these ports is the normal case, not a failure, and must not abort the rest of the protocol)
 2. Stop any preview server: call `preview_stop` for each running server ID
 3. Start the API server: `preview_start` with name `troubadour-api` (Express on port 3001)
 4. Start the UI server: `preview_start` with name `troubadour` (Vite on port 5173)
 5. Verify in the preview screenshot that the app loads and the change is visible
+6. If PM2 (`pm2 list`) ever comes up empty or missing an app that should be running, restore it with `pm2 resurrect` (restores from the last `pm2 save` snapshot) rather than manually re-starting individual apps.
 
 ## Changelog Format
 - Group changes under standard headers: `### Added`, `### Changed`, or `### Fixed`.
