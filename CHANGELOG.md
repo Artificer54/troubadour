@@ -7,6 +7,8 @@ All notable changes to Troubadour are recorded here.
 ## [Unreleased] — 2026-07-08
 
 ### Fixed
+- **Dev restart protocol no longer kills production processes** — `CLAUDE.md`'s old "kill all node processes by name" restart step also took down the PM2-managed production `troubadour` and `budget-hero` instances (PM2 auto-restarted them, but it was an avoidable outage). Restart now targets only the processes bound to the dev ports (3001, 5173). This fix already existed uncommitted directly on the production checkout from a prior session — reconciled and pushed properly.
+- **Production checkout now documented and kept in sync** — `CLAUDE.md` now documents that the live PWA runs from a separate checkout (`C:\Users\Bperk\troubadour`, PM2 process `troubadour`, port 3101) and requires an explicit pull/build/restart after every push to `main`, since pushing to GitHub alone doesn't update the running production server.
 - **PWA no longer reacts to the phone's system light/dark setting** — added `<meta name="color-scheme" content="dark">` to `index.html` and `color-scheme: dark` to `:root` in `src/index.css`. Without an explicit declaration, Android's "auto dark theme" (and similar mobile browser heuristics) was repainting colors — including the hardcoded inline SVG fills on the scenario disk — whenever the OS was in dark mode, which is why the disk was rendering white on some phones. The app is dark-themed by design regardless of system setting, so it now opts out of that heuristic entirely and renders identically on mobile and desktop.
 
 ---
