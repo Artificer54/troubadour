@@ -7,7 +7,7 @@ All notable changes to Troubadour are recorded here.
 ## [Unreleased] — 2026-07-08
 
 ### Changed
-- **Production port moved from 3101 to 5401** — `ecosystem.config.cjs`'s `SERVER_PORT` updated, PM2 process restarted from the new config and re-saved so the new port survives reboot. Chosen to sit alongside Budget Hero's production instance at 5400 in a dedicated port range, away from common dev-server defaults. `CLAUDE.md` updated to reference the new port.
+- **Production port moved from 3101 to 5401** — `ecosystem.config.cjs`'s `SERVER_PORT` updated on the production checkout, PM2 process restarted from the new config and re-saved so the new port survives reboot. Chosen to sit alongside Budget Hero's production instance at 5400 in a dedicated port range, away from common dev-server defaults. `CLAUDE.md` here and on the production checkout updated to reference the new port.
 
 ### Fixed
 - **Dev restart protocol no longer kills production processes** — `CLAUDE.md`'s old "kill all node processes by name" restart step also took down the PM2-managed production `troubadour` and `budget-hero` instances (PM2 auto-restarted them, but it was an avoidable outage). Restart now targets only the processes bound to the dev ports (3001, 5173). This fix already existed uncommitted directly on the production checkout from a prior session — reconciled and pushed properly.
